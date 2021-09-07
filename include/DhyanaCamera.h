@@ -70,6 +70,40 @@ public:
         Ready, Exposure, Readout, Latency, Fault
     } ;
 
+    enum TucamTriggerMode
+    {
+      TriggerStandard = TUCCM_TRIGGER_STANDARD,
+      TriggerSynchronous = TUCCM_TRIGGER_SYNCHRONOUS,
+      TriggerGlobal = TUCCM_TRIGGER_GLOBAL,
+      //TriggerSoftware = TUCCM_TRIGGER_SOFTWARE, do not map, this mode is used for Lima IntTrigSingle and Timer to retrig
+    };
+
+    enum TucamTriggerEdge
+    {
+      EdgeRising = TUCTD_RISING,
+      EdgeFalling = TUCTD_FAILING,
+    };
+
+    enum TucamSignal
+    {
+      SignalTrigIn = TUOPT_IN,        //copy of the trigger IN
+      SignalStart = TUOPT_EXPSTART,   // Exposure start (rolling)
+      SignalGlobal = TUOPT_EXPGLOBAL, // Global exposure
+      SignalReadEnd = TUOPT_READEND   // readout end
+    };
+    enum TucamSignalEdge
+    {
+      SignalEdgeRising = TUOPT_RISING,
+      SignalEdgeFalling = TUOPT_FAILING,
+    };
+
+    enum TucamGain
+    {
+      GainHDR  = TUGAIN_HDR,
+      GainHigh = TUGAIN_HIGH,
+      GainLow  = TUGAIN_LOW
+    };
+
     Camera(unsigned short timer_period_ms);
     virtual ~Camera();
 
@@ -135,6 +169,18 @@ public:
     void getFirmwareVersion(std::string& version);
     bool isAcqRunning() const;
 
+    void getFPS(double& fps);	
+    void getTriggerMode(TucamTriggerMode& mode){mode = m_tucam_trigger_mode;};
+    void setTriggerMode(TucamTriggerMode mode){m_tucam_trigger_mode = mode;};
+    void getTriggerEdge(TucamTriggerEdge& edge){edge = m_tucam_trigger_edge_mode;};
+    void setTriggerEdge(TucamTriggerEdge edge){m_tucam_trigger_edge_mode = edge;};
+    void getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width);
+    void getOutputSignal(int port, TucamSignal& signal);
+    void getOutputSignal1(int port, TucamSignal& signal);
+    void getOutputSignal2(int port, TucamSignal& signal);
+    void getOutputSignal3(int port, TucamSignal& signal);
+    void setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge=SignalEdgeRising, int delay=-1, int width=-1);
+
 	//TUCAM stuff, use TUCAM notations !
 	TUCAM_INIT          m_itApi; // TUCAM handle Api
 	TUCAM_OPEN          m_opCam; // TUCAM handle camera
@@ -179,7 +225,10 @@ private:
     // Buffer control object
     SoftBufferCtrlObj   m_bufferCtrlObj;
 	CSoftTriggerTimer*	m_internal_trigger_timer;
+    double              m_fps;
 	unsigned short 		m_timer_period_ms;
+    TucamTriggerMode    m_tucam_trigger_mode;
+    TucamTriggerEdge    m_tucam_trigger_edge_mode;
 
 } ;
 

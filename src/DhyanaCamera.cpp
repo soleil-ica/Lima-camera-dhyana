@@ -49,7 +49,10 @@ m_trigger_mode(IntTrig),
 m_status(Ready),
 m_acq_frame_nb(0),
 m_temperature_target(0),
-m_timer_period_ms(timer_period_ms)
+m_timer_period_ms(timer_period_ms),
+m_fps(0.0),
+m_tucam_trigger_mode(TriggerStandard),
+m_tucam_trigger_edge_mode(EdgeRising)
 {
 
 	DEB_CONSTRUCTOR();	
@@ -1104,6 +1107,117 @@ void Camera::getFirmwareVersion(std::string& version)
 	version = valInfo.nValue;
 }
 
+//-----------------------------------------------------------------------------
+/// Get the frame rate
+//-----------------------------------------------------------------------------
+void Camera::getFPS(double& fps) ///< [out] last computed fps
+{
+    DEB_MEMBER_FUNCT();
+
+    fps = m_fps;
+}
+
 //-----------------------------------------------------
-//
+// Set trigger outpout on selected channel
 //-----------------------------------------------------  
+void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge, int delay, int width)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  if (port <0 || port >2)
+    {
+      THROW_HW_ERROR(Error) << "Invalid output port number range is [0-2]";
+
+    }
+  tgroutAttr.nTgrOutPort = port;
+  tgroutAttr.nTgrOutMode = (int)signal;
+  tgroutAttr.nEdgeMode = (int)edge;
+  tgroutAttr.nDelayTm = delay;
+  tgroutAttr.nWidth = width;
+    
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut (m_opCam.hIdxTUCam, tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to set Output signal port "<< port;
+    }
+  
+}
+
+
+//-----------------------------------------------------
+// Get trigger outpout on selected channel
+//----------------------------------------------------- 
+void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  tgroutAttr.nTgrOutPort = port;
+
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut (m_opCam.hIdxTUCam, &tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to get Output signal port "<< port;
+    }  
+  signal = (TucamSignal) tgroutAttr.nTgrOutMode;
+  edge = (TucamSignalEdge)tgroutAttr.nEdgeMode;
+  delay = tgroutAttr.nDelayTm;
+  width =tgroutAttr.nWidth;
+}
+
+//-----------------------------------------------------
+// Get trigger outpout on selected channel
+//----------------------------------------------------- 
+void Camera::getOutputSignal(int port, TucamSignal& signal)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  tgroutAttr.nTgrOutPort = port;
+
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut (m_opCam.hIdxTUCam, &tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to get Output signal port "<< port;
+    }  
+  signal = (TucamSignal) tgroutAttr.nTgrOutMode;
+}
+void Camera::getOutputSignal1(int port, TucamSignal& signal)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  tgroutAttr.nTgrOutPort = port;
+
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut (m_opCam.hIdxTUCam, &tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to get Output signal port "<< port;
+    }  
+  signal = (TucamSignal) tgroutAttr.nTgrOutMode;
+}
+
+void Camera::getOutputSignal2(int port, TucamSignal& signal)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  tgroutAttr.nTgrOutPort = port;
+
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut (m_opCam.hIdxTUCam, &tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to get Output signal port "<< port;
+    }  
+  signal = (TucamSignal) tgroutAttr.nTgrOutMode;
+}
+
+void Camera::getOutputSignal3(int port, TucamSignal& signal)
+{
+  DEB_MEMBER_FUNCT();
+  TUCAM_TRGOUT_ATTR tgroutAttr;
+
+  tgroutAttr.nTgrOutPort = port;
+
+  if(TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut (m_opCam.hIdxTUCam, &tgroutAttr))
+    {
+      THROW_HW_ERROR(Error) << "Unable to get Output signal port "<< port;
+    }  
+  signal = (TucamSignal) tgroutAttr.nTgrOutMode;
+} 
