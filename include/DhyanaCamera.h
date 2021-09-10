@@ -176,9 +176,6 @@ public:
     void setTriggerEdge(TucamTriggerEdge edge){m_tucam_trigger_edge_mode = edge;};
     void getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width);
     void getOutputSignal(int port, TucamSignal& signal);
-    void getOutputSignal1(int port, TucamSignal& signal);
-    void getOutputSignal2(int port, TucamSignal& signal);
-    void getOutputSignal3(int port, TucamSignal& signal);
     void setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge=SignalEdgeRising, int delay=-1, int width=-1);
 
 	//TUCAM stuff, use TUCAM notations !
@@ -229,6 +226,9 @@ private:
 	unsigned short 		m_timer_period_ms;
     TucamTriggerMode    m_tucam_trigger_mode;
     TucamTriggerEdge    m_tucam_trigger_edge_mode;
+    TUCAM_TRGOUT_ATTR tgroutAttr1;
+    TUCAM_TRGOUT_ATTR tgroutAttr2;
+    TUCAM_TRGOUT_ATTR tgroutAttr3;
 
 } ;
 
