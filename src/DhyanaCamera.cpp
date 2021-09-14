@@ -1158,6 +1158,9 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 	{
 	case 0:
 		tgroutAttr1.nTgrOutMode = signal;
+		tgroutAttr1.nEdgeMode = edge;
+		tgroutAttr1.nDelayTm = delay;
+		tgroutAttr1.nWidth = width;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr1))
 		{
@@ -1180,6 +1183,10 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 	case 1:
 
 		tgroutAttr2.nTgrOutMode = signal;
+		tgroutAttr2.nTgrOutMode = signal;
+		tgroutAttr2.nEdgeMode = edge;
+		tgroutAttr2.nDelayTm = delay;
+		tgroutAttr2.nWidth = width;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr2))
 		{
@@ -1201,6 +1208,10 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 	case 2:
 
 		tgroutAttr3.nTgrOutMode = signal;
+		tgroutAttr3.nTgrOutMode = signal;
+		tgroutAttr3.nEdgeMode = edge;
+		tgroutAttr3.nDelayTm = delay;
+		tgroutAttr3.nWidth = width;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr3))
 		{
