@@ -227,6 +227,7 @@ void Camera::startAcq()
 
 	DEB_TRACE() << "startAcq ...";
 	m_acq_frame_nb = 0;
+	m_fps = 0.0;
 	StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
 	buffer_mgr.setStartTimestamp(Timestamp::now());
 	
@@ -431,15 +432,9 @@ void Camera::AcqThread::threadFunction()
 				frame_info.acq_frame_nb = m_cam.m_acq_frame_nb;
 				continueFlag = buffer_mgr.newFrameReady(frame_info);
 				m_cam.m_acq_frame_nb++;
-				t1_fps = Timestamp::now();
+				
 				Timestamp t1 = Timestamp::now();
-				double delta_time = t1 - t0;
-				delta_fps = t1_fps - t0_fps;
-
-				if (delta_fps > 0 )
-				{
-					m_cam.m_fps = m_cam.m_nb_frames/delta_fps;
-				}
+				double delta_time = t1 - t0;			
 
 				//wait latency after each frame , except for the last image 
 				if((!m_cam.m_nb_frames) || (m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && (m_cam.m_lat_time))
@@ -451,6 +446,14 @@ void Camera::AcqThread::threadFunction()
 			else
 			{
 				DEB_TRACE() << "Unable to get the frame from the camera !";
+			}
+
+
+			t1_fps = Timestamp::now();
+			delta_fps = t1_fps - t0_fps;
+			if (delta_fps > 0)
+			{
+				m_cam.m_fps = m_cam.m_acq_frame_nb / delta_fps;
 			}
 		}
 
@@ -475,7 +478,7 @@ void Camera::AcqThread::threadFunction()
 		double delta_time_capture = t1_capture - t0_capture;
 
 		DEB_TRACE() << "Capture all frames elapsed time = " << (int) (delta_time_capture * 1000) << " (ms)";				
-		DEB_ALWAYS() << "FPS : " << (int)m_cam.m_fps;
+		DEB_ALWAYS() << "FPS : " << std::setprecision(2) << m_cam.m_fps;
 
 		aLock.lock();
 		m_cam.m_thread_running = false;
