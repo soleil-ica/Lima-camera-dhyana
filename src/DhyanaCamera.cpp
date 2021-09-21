@@ -129,20 +129,20 @@ void Camera::init()
 	tgroutAttr1.nTgrOutPort = 0;
 	tgroutAttr1.nTgrOutMode = TucamSignal::SignalReadEnd;
 	tgroutAttr1.nEdgeMode = 0;
-	tgroutAttr1.nDelayTm = 100;
-	tgroutAttr1.nWidth = 110;
+	tgroutAttr1.nDelayTm = 0;
+	tgroutAttr1.nWidth = 5000;
 
 	tgroutAttr2.nTgrOutPort = 1;
 	tgroutAttr2.nTgrOutMode = TucamSignal::SignalReadEnd;
 	tgroutAttr2.nEdgeMode = 1;
-	tgroutAttr2.nDelayTm = 200;
-	tgroutAttr2.nWidth = 220;
+	tgroutAttr2.nDelayTm = 0;
+	tgroutAttr2.nWidth = 5000;
 
 	tgroutAttr3.nTgrOutPort = 2;
 	tgroutAttr3.nTgrOutMode = TucamSignal::SignalReadEnd;
 	tgroutAttr3.nEdgeMode = 1;
-	tgroutAttr3.nDelayTm = 300;
-	tgroutAttr3.nWidth = 330;
+	tgroutAttr3.nDelayTm = 0;
+	tgroutAttr3.nWidth = 5000;
 }
 
 //-----------------------------------------------------
@@ -1162,8 +1162,8 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 	case 0:
 		tgroutAttr1.nTgrOutMode = signal;
 		tgroutAttr1.nEdgeMode = edge;
-		tgroutAttr1.nDelayTm = delay;
-		tgroutAttr1.nWidth = width;
+		tgroutAttr1.nDelayTm = delay * 1000;
+		tgroutAttr1.nWidth = width * 1000;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr1))
 		{
@@ -1188,8 +1188,8 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 		tgroutAttr2.nTgrOutMode = signal;
 		tgroutAttr2.nTgrOutMode = signal;
 		tgroutAttr2.nEdgeMode = edge;
-		tgroutAttr2.nDelayTm = delay;
-		tgroutAttr2.nWidth = width;
+		tgroutAttr2.nDelayTm = delay * 1000;
+		tgroutAttr2.nWidth = width * 1000;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr2))
 		{
@@ -1213,8 +1213,8 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 		tgroutAttr3.nTgrOutMode = signal;
 		tgroutAttr3.nTgrOutMode = signal;
 		tgroutAttr3.nEdgeMode = edge;
-		tgroutAttr3.nDelayTm = delay;
-		tgroutAttr3.nWidth = width;
+		tgroutAttr3.nDelayTm = delay * 1000;
+		tgroutAttr3.nWidth = width * 1000;
 
 		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, tgroutAttr3))
 		{
