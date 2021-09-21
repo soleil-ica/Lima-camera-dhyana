@@ -68,6 +68,32 @@ Optional capabilites
 * HwShutter
 
   There is no shutter control.
+  
+* Output trigger Mode
+
+  This plugin provides the ability to manage output triggers modes on each channel.
+  Supported trigger modes : 
+  
+  - ExposureStart
+  - Readout
+  - Global
+  
+* Output trigger option
+  
+  This plugin provides the ability to manage output triggers options on each channel.
+  Supported trigger options : 
+   
+  - Width
+  - Delay
+   
+* Output trigger channel
+ 
+  This plugin provides the ability to manage camera channels.
+  Supported channels : 
+   
+  - Channel 1
+  - Channel 2
+  - Channel 3
 
 Configuration
 `````````````
