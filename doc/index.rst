@@ -85,6 +85,14 @@ Optional capabilites
    
   - Width
   - Delay
+  
+* Output trigger edge
+
+  This plugin provides the ability to manage output triggers edges on each channel.
+  Supported trigger edges :
+
+  - Rising
+  - Failing  
    
 * Output trigger channel
  
