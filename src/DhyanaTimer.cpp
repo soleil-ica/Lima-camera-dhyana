@@ -43,7 +43,7 @@ using namespace std;
 //---------------------------    
 CBaseTimer::CBaseTimer(int period) :
 m_period_ms(period),
-m_nb_triggers(-1)
+m_nb_triggers(0)
 {
 	DEB_CONSTRUCTOR();		
 	// Set resolution to the minimum supported by the system
@@ -74,7 +74,7 @@ void CBaseTimer::start()
 {
 	DEB_MEMBER_FUNCT();
 	
-	m_nb_triggers = -1;
+	m_nb_triggers = 0;
 	m_timer_id = timeSetEvent(m_period_ms, m_resolution, base_timer_proc, (DWORD_PTR)this, TIME_PERIODIC);
 	if (m_timer_id == NULL)
 	{

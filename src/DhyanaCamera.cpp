@@ -169,7 +169,7 @@ void Camera::prepareAcq()
 	//@BEGIN : Ensure that Acquisition is Started before return ...
 	DEB_TRACE() << "prepareAcq ...";
 	DEB_TRACE() << "Ensure that Acquisition is Started";
-	setStatus(Camera::Exposure, false);
+	setStatus(Camera::Ready, false);
 	if(NULL == m_hThdEvent)
 	{
 		m_frame.pBuffer = NULL;
@@ -195,6 +195,11 @@ void Camera::prepareAcq()
 		{
 			// Start capture in external trigger STANDARD (EXPOSURE WIDTH)
 			TUCAM_Cap_Start(m_opCam.hIdxTUCam, TUCCM_TRIGGER_STANDARD);
+		}
+		else if(m_trigger_mode == IntTrigMult)
+		{
+			// Start capture in software trigger
+			TUCAM_Cap_Start(m_opCam.hIdxTUCam, TUCCM_TRIGGER_SOFTWARE);
 		}
 		
 		////DEB_TRACE() << "TUCAM CreateEvent";
@@ -240,6 +245,13 @@ void Camera::startAcq()
 		m_cond.broadcast();
 		m_cond.wait();
 	}
+	//@BEGIN : trigger the acquisition
+	if(m_trigger_mode == IntTrigMult)	
+	{
+		DEB_TRACE() <<"Start Internal Trigger Multi Timer";
+		m_internal_trigger_timer->start();
+	}
+	//@END
 	
 	Timestamp t1 = Timestamp::now();
 	double delta_time = t1 - t0;
@@ -388,7 +400,7 @@ void Camera::AcqThread::threadFunction()
 			}
 
 			//set status to exposure
-			m_cam.setStatus(Camera::Exposure, false);
+			//m_cam.setStatus(Camera::Exposure, false);
 			
 			//wait frame from TUCAM API ...
 			if(m_cam.m_acq_frame_nb == 0)//display TRACE only once ...
@@ -398,22 +410,29 @@ void Camera::AcqThread::threadFunction()
 			
 			if(TUCAMRET_SUCCESS == TUCAM_Buf_WaitForFrame(m_cam.m_opCam.hIdxTUCam, &m_cam.m_frame))
 			{
+				//@BEGIN : trigger the acquisition
+				if (m_cam.m_trigger_mode == IntTrigMult)
+				{
+					DEB_TRACE() << "Stop Internal Trigger Multi Timer";
+					m_cam.m_internal_trigger_timer->stop();
+				}
+				//@END
 				//The based information
-				//DEB_TRACE() << "m_cam.m_frame.szSignature = "	<< m_cam.m_frame.szSignature<<std::endl;		// [out]Copyright+Version: TU+1.0 ['T', 'U', '1', '\0']		
+				//DEB_TRACE() << "m_cam.m_frame.szSignature = "	<< m_cam.m_frame.szSignature<<std::endl;		// [out]Copyright+Version: TU+1.0 ['T', 'U', '1', '\0']
 				//DEB_TRACE() << "m_cam.m_frame.usHeader = "	<< m_cam.m_frame.usHeader<<std::endl;			// [out] The frame header size
 				//DEB_TRACE() << "m_cam.m_frame.usOffset = "	<< m_cam.m_frame.usOffset<<std::endl;			// [out] The frame data offset
 				//DEB_TRACE() << "m_cam.m_frame.usWidth = "		<< m_cam.m_frame.usWidth;						// [out] The frame width
 				//DEB_TRACE() << "m_cam.m_frame.usHeight = "	<< m_cam.m_frame.usHeight;						// [out] The frame height
 				//DEB_TRACE() << "m_cam.m_frame.uiWidthStep = "	<< m_cam.m_frame.uiWidthStep<<std::endl;		// [out] The frame width step
-				//DEB_TRACE() << "m_cam.m_frame.ucDepth = "		<< m_cam.m_frame.ucDepth<<std::endl;			// [out] The frame data depth 
-				//DEB_TRACE() << "m_cam.m_frame.ucFormat = "	<< m_cam.m_frame.ucFormat<<std::endl;			// [out] The frame data format                  
+				//DEB_TRACE() << "m_cam.m_frame.ucDepth = "		<< m_cam.m_frame.ucDepth<<std::endl;			// [out] The frame data depth
+				//DEB_TRACE() << "m_cam.m_frame.ucFormat = "	<< m_cam.m_frame.ucFormat<<std::endl;			// [out] The frame data format
 				//DEB_TRACE() << "m_cam.m_frame.ucChannels = "	<< m_cam.m_frame.ucChannels<<std::endl;			// [out] The frame data channels
 				//DEB_TRACE() << "m_cam.m_frame.ucElemBytes = "	<< m_cam.m_frame.ucElemBytes<<std::endl;		// [out] The frame data bytes per element
 				//DEB_TRACE() << "m_cam.m_frame.ucFormatGet = "	<< m_cam.m_frame.ucFormatGet<<std::endl;		// [in]  Which frame data format do you want    see TUFRM_FORMATS
 				//DEB_TRACE() << "m_cam.m_frame.uiIndex = "		<< m_cam.m_frame.uiIndex;						// [in/out] The frame index number
 				//DEB_TRACE() << "m_cam.m_frame.uiImgSize = "	<< m_cam.m_frame.uiImgSize;						// [out] The frame size
 				//DEB_TRACE() << "m_cam.m_frame.uiRsdSize = "	<< m_cam.m_frame.uiRsdSize;						// [in]  The frame reserved size    (how many frames do you want)
-				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
+				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size
 
 				// Grabbing was successful, process image
 				m_cam.setStatus(Camera::Readout, false);
@@ -455,6 +474,13 @@ void Camera::AcqThread::threadFunction()
 			{
 				m_cam.m_fps = m_cam.m_acq_frame_nb / delta_fps;
 			}
+			//@BEGIN : trigger the acquisition
+			if (m_cam.m_trigger_mode == IntTrigMult)
+			{
+				DEB_TRACE() << "set Ready";
+				m_cam.setStatus(Camera::Ready, false);
+			}
+			//@END
 		}
 
 		//
@@ -625,13 +651,14 @@ bool Camera::checkTrigMode(TrigMode mode)
 	switch(mode)
 	{
 		case IntTrig:
+		case IntTrigMult:
 		case ExtTrigMult:
 		case ExtGate:
 			valid_mode = true;
 			break;
 		case ExtTrigReadout:
 		case ExtTrigSingle:
-		case IntTrigMult:
+
 		default:
 			valid_mode = false;
 			break;
@@ -658,6 +685,12 @@ void Camera::setTrigMode(TrigMode mode)
 
 	switch(mode)
 	{
+		case IntTrigMult:
+		tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+		tgrAttr.nExpMode = TUCTE_EXPTM;
+		TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
+		DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_SOFTWARE (EXPOSURE SOFTWARE MULTI)";
+		break;
 		case IntTrig:
 			tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
 			tgrAttr.nExpMode = TUCTE_EXPTM;
@@ -677,7 +710,6 @@ void Camera::setTrigMode(TrigMode mode)
 			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE TRIGGER WIDTH: "<<tgrAttr.nExpMode<<")";
 			break;			
 		case ExtTrigSingle :		
-		case IntTrigMult:
 		case ExtTrigReadout:
 		default:
 			THROW_HW_ERROR(NotSupported) << DEB_VAR1(mode);
