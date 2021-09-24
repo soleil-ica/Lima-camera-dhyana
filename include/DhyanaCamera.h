@@ -67,41 +67,41 @@ public:
 
     enum Status
     {
-        Ready, Exposure, Readout, Latency, Fault
+        kReady, kExposure, kReadout, kLatency, kFault
     } ;
 
     enum TucamTriggerMode
     {
-      TriggerStandard = TUCCM_TRIGGER_STANDARD,
-      TriggerSynchronous = TUCCM_TRIGGER_SYNCHRONOUS,
-      TriggerGlobal = TUCCM_TRIGGER_GLOBAL,
+      kTriggerStandard = TUCCM_TRIGGER_STANDARD,
+      kTriggerSynchronous = TUCCM_TRIGGER_SYNCHRONOUS,
+      kTriggerGlobal = TUCCM_TRIGGER_GLOBAL,
       //TriggerSoftware = TUCCM_TRIGGER_SOFTWARE, do not map, this mode is used for Lima IntTrigSingle and Timer to retrig
     };
 
     enum TucamTriggerEdge
     {
-      EdgeRising = TUCTD_RISING,
-      EdgeFalling = TUCTD_FAILING,
+      kEdgeRising = TUCTD_RISING,
+      kEdgeFalling = TUCTD_FAILING,
     };
 
     enum TucamSignal
     {
-      SignalTrigIn = TUOPT_IN,        //copy of the trigger IN
-      SignalStart = TUOPT_EXPSTART,   // Exposure start (rolling)
-      SignalGlobal = TUOPT_EXPGLOBAL, // Global exposure
-      SignalReadEnd = TUOPT_READEND   // readout end
+      kSignalTrigIn = TUOPT_IN,        //copy of the trigger IN
+      kSignalStart = TUOPT_EXPSTART,   // Exposure start (rolling)
+      kSignalGlobal = TUOPT_EXPGLOBAL, // Global exposure
+      kSignalReadEnd = TUOPT_READEND   // readout end
     };
     enum TucamSignalEdge
     {
-      SignalEdgeRising = TUOPT_RISING,
-      SignalEdgeFalling = TUOPT_FAILING,
+      kSignalEdgeRising = TUOPT_RISING,
+      kSignalEdgeFalling = TUOPT_FAILING,
     };
 
     enum TucamGain
     {
-      GainHDR  = TUGAIN_HDR,
-      GainHigh = TUGAIN_HIGH,
-      GainLow  = TUGAIN_LOW
+      kGainHDR  = TUGAIN_HDR,
+      kGainHigh = TUGAIN_HIGH,
+      kGainLow  = TUGAIN_LOW
     };
 
     Camera(unsigned short timer_period_ms);
@@ -170,12 +170,12 @@ public:
     bool isAcqRunning() const;
 
     void getFPS(double& fps);	
-    void getTriggerMode(TucamTriggerMode& mode){mode = m_tucam_trigger_mode;};
-    void setTriggerMode(TucamTriggerMode mode){m_tucam_trigger_mode = mode;};
-    void getTriggerEdge(TucamTriggerEdge& edge){edge = m_tucam_trigger_edge_mode;};
-    void setTriggerEdge(TucamTriggerEdge edge){m_tucam_trigger_edge_mode = edge;};
+    void getTriggerMode(TucamTriggerMode& mode);
+    void setTriggerMode(TucamTriggerMode mode);
+    void getTriggerEdge(TucamTriggerEdge& edge);
+    void setTriggerEdge(TucamTriggerEdge edge);
     void getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width);
-    void setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge=SignalEdgeRising, int delay=-1, int width=-1);
+    void setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge=kSignalEdgeRising, int delay=-1, int width=-1);
 
 	//TUCAM stuff, use TUCAM notations !
 	TUCAM_INIT          m_itApi; // TUCAM handle Api
@@ -223,11 +223,13 @@ private:
 	CSoftTriggerTimer*	m_internal_trigger_timer;
     double              m_fps;
 	unsigned short 		m_timer_period_ms;
+    
+    //TUCAM stuff, use TUCAM notations !
     TucamTriggerMode    m_tucam_trigger_mode;
     TucamTriggerEdge    m_tucam_trigger_edge_mode;
-    TUCAM_TRGOUT_ATTR tgroutAttr1;
-    TUCAM_TRGOUT_ATTR tgroutAttr2;
-    TUCAM_TRGOUT_ATTR tgroutAttr3;
+    TUCAM_TRGOUT_ATTR m_tgroutAttr1;
+    TUCAM_TRGOUT_ATTR m_tgroutAttr2;
+    TUCAM_TRGOUT_ATTR m_tgroutAttr3;
 
 } ;
 

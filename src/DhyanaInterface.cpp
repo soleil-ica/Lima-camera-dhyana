@@ -129,24 +129,24 @@ void Interface::stopAcq()
 void Interface::getStatus(StatusType& status)
 {
 
-    Camera::Status camera_status = Camera::Ready;
+    Camera::Status camera_status = Camera::kReady;
     m_cam.getStatus(camera_status);
 	
 	switch (camera_status)
     {
-    case Camera::Ready:
+    case Camera::kReady:
       status.set(HwInterface::StatusType::Ready);
       break;
-    case Camera::Exposure:
+    case Camera::kExposure:
       status.set(HwInterface::StatusType::Exposure);
       break;
-    case Camera::Readout:
+    case Camera::kReadout:
       status.set(HwInterface::StatusType::Readout);
       break;
-    case Camera::Latency:
+    case Camera::kLatency:
       status.set(HwInterface::StatusType::Latency);
       break;
-    case Camera::Fault:
+    case Camera::kFault:
       status.set(HwInterface::StatusType::Fault);
     }
 }
