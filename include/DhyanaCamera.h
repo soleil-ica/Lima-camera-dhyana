@@ -67,7 +67,7 @@ public:
 
     enum Status
     {
-        kReady, kExposure, kReadout, kLatency, kFault
+        Ready, Exposure, Readout, Latency, Fault
     } ;
 
     enum TucamTriggerMode
