@@ -46,7 +46,7 @@ using namespace std;
 Camera::Camera(unsigned short timer_period_ms):
 m_depth(16),
 m_trigger_mode(IntTrig),
-m_status(kReady),
+m_status(Ready),
 m_acq_frame_nb(0),
 m_temperature_target(0),
 m_timer_period_ms(timer_period_ms),
@@ -169,7 +169,7 @@ void Camera::prepareAcq()
 	//@BEGIN : Ensure that Acquisition is Started before return ...
 	DEB_TRACE() << "prepareAcq ...";
 	DEB_TRACE() << "Ensure that Acquisition is Started";
-	setStatus(Camera::kExposure, false);
+	setStatus(Camera::Exposure, false);
 	if(NULL == m_hThdEvent)
 	{
 		m_frame.pBuffer = NULL;
@@ -232,7 +232,7 @@ void Camera::startAcq()
 	buffer_mgr.setStartTimestamp(Timestamp::now());
 	
 	DEB_TRACE() << "Ensure that Acquisition is Started  & wait thread to be started";
-	setStatus(Camera::kExposure, false);		
+	setStatus(Camera::Exposure, false);		
 	//Start acquisition thread & wait 
 	{
 		m_wait_flag = false;
@@ -290,7 +290,7 @@ void Camera::stopAcq()
 	//@BEGIN
 	//now detector is ready
 	DEB_TRACE() << "Ensure that Acquisition is Stopped";
-	setStatus(Camera::kReady, false);
+	setStatus(Camera::Ready, false);
 	//@END	
 	
 	Timestamp t1 = Timestamp::now();
@@ -305,7 +305,7 @@ void Camera::setStatus(Camera::Status status, bool force)
 {
 	DEB_MEMBER_FUNCT();
 	//AutoMutex aLock(m_cond.mutex());
-	if(force || m_status != Camera::kFault)
+	if(force || m_status != Camera::Fault)
 		m_status = status;
 	//m_cond.broadcast();
 }
@@ -388,7 +388,7 @@ void Camera::AcqThread::threadFunction()
 			}
 
 			//set status to exposure
-			m_cam.setStatus(Camera::kExposure, false);
+			m_cam.setStatus(Camera::Exposure, false);
 			
 			//wait frame from TUCAM API ...
 			if(m_cam.m_acq_frame_nb == 0)//display TRACE only once ...
@@ -416,7 +416,7 @@ void Camera::AcqThread::threadFunction()
 				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
 
 				// Grabbing was successful, process image
-				m_cam.setStatus(Camera::kReadout, false);
+				m_cam.setStatus(Camera::Readout, false);
 
 				//Prepare Lima Frame Ptr 
 				void* bptr = buffer_mgr.getFrameBufferPtr(m_cam.m_acq_frame_nb);
@@ -471,7 +471,7 @@ void Camera::AcqThread::threadFunction()
 		}
 
 		//now detector is ready
-		m_cam.setStatus(Camera::kReady, false);
+		m_cam.setStatus(Camera::Ready, false);
 		DEB_TRACE() << "AcqThread is no more running";		
 		
 		Timestamp t1_capture = Timestamp::now();
