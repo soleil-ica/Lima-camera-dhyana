@@ -49,7 +49,10 @@ m_trigger_mode(IntTrig),
 m_status(Ready),
 m_acq_frame_nb(0),
 m_temperature_target(0),
-m_timer_period_ms(timer_period_ms)
+m_timer_period_ms(timer_period_ms),
+m_fps(0.0),
+m_tucam_trigger_mode(kTriggerStandard),
+m_tucam_trigger_edge_mode(kEdgeRising)
 {
 
 	DEB_CONSTRUCTOR();	
@@ -61,7 +64,6 @@ m_timer_period_ms(timer_period_ms)
 	DEB_TRACE() <<"Create the Internal Trigger Timer";
 	m_internal_trigger_timer = new CSoftTriggerTimer(m_timer_period_ms, *this);
 	m_acq_thread->start();
-	
 }
 
 //-----------------------------------------------------
@@ -123,6 +125,24 @@ void Camera::init()
 	
 	//initialize TUCAM Event used when Waiting for Frame
 	m_hThdEvent = NULL;
+
+	m_tgroutAttr1.nTgrOutPort = 0;
+	m_tgroutAttr1.nTgrOutMode = TucamSignal::kSignalReadEnd;
+	m_tgroutAttr1.nEdgeMode = TucamSignalEdge::kSignalEdgeRising;
+	m_tgroutAttr1.nDelayTm = 0;
+	m_tgroutAttr1.nWidth = 5000;
+
+	m_tgroutAttr2.nTgrOutPort = 1;
+	m_tgroutAttr2.nTgrOutMode = TucamSignal::kSignalReadEnd;
+	m_tgroutAttr2.nEdgeMode = TucamSignalEdge::kSignalEdgeRising;
+	m_tgroutAttr2.nDelayTm = 0;
+	m_tgroutAttr2.nWidth = 5000;
+
+	m_tgroutAttr3.nTgrOutPort = 2;
+	m_tgroutAttr3.nTgrOutMode = TucamSignal::kSignalReadEnd;
+	m_tgroutAttr3.nEdgeMode = TucamSignalEdge::kSignalEdgeRising;
+	m_tgroutAttr3.nDelayTm = 0;
+	m_tgroutAttr3.nWidth = 5000;
 }
 
 //-----------------------------------------------------
@@ -207,6 +227,7 @@ void Camera::startAcq()
 
 	DEB_TRACE() << "startAcq ...";
 	m_acq_frame_nb = 0;
+	m_fps = 0.0;
 	StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
 	buffer_mgr.setStartTimestamp(Timestamp::now());
 	
@@ -350,10 +371,12 @@ void Camera::AcqThread::threadFunction()
 		aLock.unlock();		
 
 		Timestamp t0_capture = Timestamp::now();
+		Timestamp t0_fps, t1_fps, delta_fps;
 
 		//@BEGIN 
 		DEB_TRACE() << "Capture all frames ...";
 		bool continueFlag = true;
+		t0_fps = Timestamp::now();
 		while(continueFlag && (!m_cam.m_nb_frames || m_cam.m_acq_frame_nb < m_cam.m_nb_frames))
 		{
 			// Check first if acq. has been stopped
@@ -409,9 +432,10 @@ void Camera::AcqThread::threadFunction()
 				frame_info.acq_frame_nb = m_cam.m_acq_frame_nb;
 				continueFlag = buffer_mgr.newFrameReady(frame_info);
 				m_cam.m_acq_frame_nb++;
-				Timestamp t1 = Timestamp::now();
-				double delta_time = t1 - t0;
 				
+				Timestamp t1 = Timestamp::now();
+				double delta_time = t1 - t0;			
+
 				//wait latency after each frame , except for the last image 
 				if((!m_cam.m_nb_frames) || (m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && (m_cam.m_lat_time))
 				{
@@ -422,6 +446,14 @@ void Camera::AcqThread::threadFunction()
 			else
 			{
 				DEB_TRACE() << "Unable to get the frame from the camera !";
+			}
+
+
+			t1_fps = Timestamp::now();
+			delta_fps = t1_fps - t0_fps;
+			if (delta_fps > 0)
+			{
+				m_cam.m_fps = m_cam.m_acq_frame_nb / delta_fps;
 			}
 		}
 
@@ -444,8 +476,9 @@ void Camera::AcqThread::threadFunction()
 		
 		Timestamp t1_capture = Timestamp::now();
 		double delta_time_capture = t1_capture - t0_capture;
+
 		DEB_TRACE() << "Capture all frames elapsed time = " << (int) (delta_time_capture * 1000) << " (ms)";				
-		
+
 		aLock.lock();
 		m_cam.m_thread_running = false;
 		m_cam.m_wait_flag = true;
@@ -660,7 +693,30 @@ void Camera::getTrigMode(TrigMode& mode)
 {
 	DEB_MEMBER_FUNCT();
 	mode = m_trigger_mode;
-	DEB_RETURN() << DEB_VAR1(mode);
+}
+
+void Camera::getTriggerMode(TucamTriggerMode &mode)
+{
+	DEB_MEMBER_FUNCT();
+	mode = m_tucam_trigger_mode;
+}
+
+void Camera::setTriggerMode(TucamTriggerMode mode)
+{
+	DEB_MEMBER_FUNCT();
+	m_tucam_trigger_mode = mode;
+}
+
+void Camera::getTriggerEdge(TucamTriggerEdge &edge)
+{
+	DEB_MEMBER_FUNCT();
+	edge = m_tucam_trigger_edge_mode;
+}
+
+void Camera::setTriggerEdge(TucamTriggerEdge edge)
+{
+	DEB_MEMBER_FUNCT();
+	m_tucam_trigger_edge_mode = edge;
 }
 
 //-----------------------------------------------------
@@ -1104,6 +1160,139 @@ void Camera::getFirmwareVersion(std::string& version)
 	version = valInfo.nValue;
 }
 
+//-----------------------------------------------------------------------------
+/// Get the frame rate
+//-----------------------------------------------------------------------------
+void Camera::getFPS(double& fps) ///< [out] last computed fps
+{
+    DEB_MEMBER_FUNCT();
+
+    fps = m_fps;
+}
+
 //-----------------------------------------------------
-//
+// Set trigger outpout on selected port
 //-----------------------------------------------------  
+void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge, int delay, int width)
+{
+	DEB_MEMBER_FUNCT();
+
+	TUCAM_TRGOUT_ATTR tgroutAttr;
+
+	switch (port)
+	{
+	case 0:
+		m_tgroutAttr1.nTgrOutMode = signal;
+		m_tgroutAttr1.nEdgeMode = edge;
+		m_tgroutAttr1.nDelayTm = delay * 1000;
+		m_tgroutAttr1.nWidth = width * 1000;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgroutAttr1))
+		{
+			THROW_HW_ERROR(Error) << "Unable to set Output signal port " << port;
+		}
+
+		tgroutAttr.nTgrOutPort = port;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &tgroutAttr))
+		{
+			THROW_HW_ERROR(Error) << "Unable to get Output signal port " << port;
+		}
+
+		m_tgroutAttr1.nTgrOutMode = tgroutAttr.nTgrOutMode;
+		m_tgroutAttr1.nEdgeMode = tgroutAttr.nEdgeMode;
+		m_tgroutAttr1.nDelayTm = tgroutAttr.nDelayTm;
+		m_tgroutAttr1.nWidth = tgroutAttr.nWidth;
+		break;
+
+	case 1:
+
+		m_tgroutAttr2.nTgrOutMode = signal;
+		m_tgroutAttr2.nTgrOutMode = signal;
+		m_tgroutAttr2.nEdgeMode = edge;
+		m_tgroutAttr2.nDelayTm = delay * 1000;
+		m_tgroutAttr2.nWidth = width * 1000;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgroutAttr2))
+		{
+			THROW_HW_ERROR(Error) << "Unable to set Output signal port " << port;
+		}
+
+		tgroutAttr.nTgrOutPort = port;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &tgroutAttr))
+		{
+			THROW_HW_ERROR(Error) << "Unable to get Output signal port " << port;
+		}
+		m_tgroutAttr2.nTgrOutMode = tgroutAttr.nTgrOutMode;
+		m_tgroutAttr2.nEdgeMode = tgroutAttr.nEdgeMode;
+		m_tgroutAttr2.nDelayTm = tgroutAttr.nDelayTm;
+		m_tgroutAttr2.nWidth = tgroutAttr.nWidth;
+		break;
+
+	case 2:
+
+		m_tgroutAttr3.nTgrOutMode = signal;
+		m_tgroutAttr3.nTgrOutMode = signal;
+		m_tgroutAttr3.nEdgeMode = edge;
+		m_tgroutAttr3.nDelayTm = delay * 1000;
+		m_tgroutAttr3.nWidth = width * 1000;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_SetTriggerOut(m_opCam.hIdxTUCam, m_tgroutAttr3))
+		{
+			THROW_HW_ERROR(Error) << "Unable to set Output signal port " << port;
+		}
+
+		tgroutAttr.nTgrOutPort = port;
+
+		if (TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &tgroutAttr))
+		{
+			THROW_HW_ERROR(Error) << "Unable to get Output signal port " << port;
+		}
+		m_tgroutAttr3.nTgrOutMode = tgroutAttr.nTgrOutMode;
+		m_tgroutAttr3.nEdgeMode = tgroutAttr.nEdgeMode;
+		m_tgroutAttr3.nDelayTm = tgroutAttr.nDelayTm;
+		m_tgroutAttr3.nWidth = tgroutAttr.nWidth;
+		break;
+
+	default:
+		THROW_HW_ERROR(Error) << "Unable to set Output signal port " << port;
+		break;
+	}
+}
+
+//-----------------------------------------------------
+// Get trigger outpout on selected port
+//----------------------------------------------------- 
+void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width)
+{
+  DEB_MEMBER_FUNCT();
+
+  switch (port)
+  {
+  case 0:
+	  signal = (TucamSignal)m_tgroutAttr1.nTgrOutMode;
+	  edge = (TucamSignalEdge)m_tgroutAttr1.nEdgeMode;
+	  delay = m_tgroutAttr1.nDelayTm;
+	  width = m_tgroutAttr1.nWidth;
+	  break;
+
+  case 1:
+	  signal = (TucamSignal)m_tgroutAttr2.nTgrOutMode;
+	  edge = (TucamSignalEdge)m_tgroutAttr2.nEdgeMode;
+	  delay = m_tgroutAttr2.nDelayTm;
+	  width = m_tgroutAttr2.nWidth;
+	  break;
+
+  case 2:
+	  signal = (TucamSignal)m_tgroutAttr3.nTgrOutMode;
+	  edge = (TucamSignalEdge)m_tgroutAttr3.nEdgeMode;
+	  delay = m_tgroutAttr3.nDelayTm;
+	  width = m_tgroutAttr3.nWidth;
+	  break;
+
+  default:
+	  THROW_HW_ERROR(Error) << "Unable to set Output signal port " << port;
+	  break;
+  }
+}
