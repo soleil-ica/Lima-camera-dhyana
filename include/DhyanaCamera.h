@@ -72,6 +72,7 @@ public:
 
     enum TucamTriggerMode
     {
+
       kTriggerStandard = TUCCM_TRIGGER_STANDARD,
       kTriggerSynchronous = TUCCM_TRIGGER_SYNCHRONOUS,
       kTriggerGlobal = TUCCM_TRIGGER_GLOBAL,
