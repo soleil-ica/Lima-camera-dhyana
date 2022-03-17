@@ -186,6 +186,11 @@ void Camera::prepareAcq()
 			// Start capture in software trigger
 			TUCAM_Cap_Start(m_opCam.hIdxTUCam, TUCCM_TRIGGER_SOFTWARE);
 		}
+		if(m_trigger_mode == IntTrigMult)
+		{
+			// Start capture in software trigger
+			TUCAM_Cap_Start(m_opCam.hIdxTUCam, TUCCM_TRIGGER_SOFTWARE);
+		}		
 		else if(m_trigger_mode == ExtTrigMult)
 		{
 			// Start capture in external trigger STANDARD (EXPOSURE SOFT)
@@ -241,6 +246,14 @@ void Camera::startAcq()
 		m_cond.wait();
 	}
 	
+	//@BEGIN : trigger the acquisition
+	if(m_trigger_mode == IntTrigMult)	
+	{
+		DEB_TRACE() <<"Start Internal Trigger Timer";
+		m_internal_trigger_timer->start();
+	}
+	//@END
+	
 	Timestamp t1 = Timestamp::now();
 	double delta_time = t1 - t0;
 	DEB_TRACE() << "startAcq : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
@@ -281,6 +294,14 @@ void Camera::stopAcq()
 	
 	//@BEGIN : trigger the acquisition
 	if(m_trigger_mode == IntTrig)	
+	{
+		DEB_TRACE() <<"Stop Internal Trigger Timer";
+		m_internal_trigger_timer->stop();
+	}
+	//@END
+	
+	//@BEGIN : trigger the acquisition
+	if(m_trigger_mode == IntTrigMult)	
 	{
 		DEB_TRACE() <<"Stop Internal Trigger Timer";
 		m_internal_trigger_timer->stop();
@@ -415,6 +436,14 @@ void Camera::AcqThread::threadFunction()
 				//DEB_TRACE() << "m_cam.m_frame.uiRsdSize = "	<< m_cam.m_frame.uiRsdSize;						// [in]  The frame reserved size    (how many frames do you want)
 				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
 
+				//@BEGIN : trigger the acquisition
+				if(m_trigger_mode == IntTrigMult)	
+				{
+					DEB_TRACE() <<"Stop Internal Trigger Timer";
+					m_internal_trigger_timer->stop();
+				}
+				//@END
+	
 				// Grabbing was successful, process image
 				m_cam.setStatus(Camera::Readout, false);
 
