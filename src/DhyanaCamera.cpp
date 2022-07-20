@@ -437,10 +437,10 @@ void Camera::AcqThread::threadFunction()
 				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
 
 				//@BEGIN : trigger the acquisition
-				if(m_trigger_mode == IntTrigMult)	
+				if(m_cam.m_trigger_mode == IntTrigMult)	
 				{
 					DEB_TRACE() <<"Stop Internal Trigger Timer";
-					m_internal_trigger_timer->stop();
+					m_cam.m_internal_trigger_timer->stop();
 				}
 				//@END
 	
