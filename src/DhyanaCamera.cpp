@@ -169,7 +169,7 @@ void Camera::prepareAcq()
 	//@BEGIN : Ensure that Acquisition is Started before return ...
 	DEB_TRACE() << "prepareAcq ...";
 	DEB_TRACE() << "Ensure that Acquisition is Started";
-	setStatus(Camera::Exposure, false);
+	setStatus(Camera::Ready, false);
 	if(NULL == m_hThdEvent)
 	{
 		m_frame.pBuffer = NULL;
@@ -213,6 +213,10 @@ void Camera::prepareAcq()
 		m_internal_trigger_timer->start();
 	}
 	//@END
+	if(m_trigger_mode == IntTrigMult)
+	{
+	  _startAcq();
+    }
 	
 	Timestamp t1 = Timestamp::now();
 	double delta_time = t1 - t0;
@@ -231,13 +235,23 @@ void Camera::startAcq()
 	Timestamp t0 = Timestamp::now();
 
 	DEB_TRACE() << "startAcq ...";
-	m_acq_frame_nb = 0;
-	m_fps = 0.0;
+
 	StdBufferCbMgr& buffer_mgr = m_bufferCtrlObj.getBuffer();
 	buffer_mgr.setStartTimestamp(Timestamp::now());
 	
+	//@BEGIN : trigger the acquisition
+	if(m_trigger_mode == IntTrigMult)	
+	{
+		DEB_TRACE() <<"Start Internal Trigger Timer (Multi)";
+		m_internal_trigger_timer->start();
+		return;
+	}
+	//@END
+	m_acq_frame_nb = 0;
+	m_fps = 0.0;	
 	DEB_TRACE() << "Ensure that Acquisition is Started  & wait thread to be started";
 	setStatus(Camera::Exposure, false);		
+	////setStatus(Camera::Ready, false);		
 	//Start acquisition thread & wait 
 	{
 		m_wait_flag = false;
@@ -246,19 +260,22 @@ void Camera::startAcq()
 		m_cond.wait();
 	}
 	
-	//@BEGIN : trigger the acquisition
-	if(m_trigger_mode == IntTrigMult)	
-	{
-		DEB_TRACE() <<"Start Internal Trigger Timer";
-		m_internal_trigger_timer->start();
-	}
-	//@END
 	
 	Timestamp t1 = Timestamp::now();
 	double delta_time = t1 - t0;
 	DEB_TRACE() << "startAcq : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
 }
 
+void Camera::_startAcq()
+{
+  DEB_MEMBER_FUNCT();
+  m_acq_frame_nb = 0;
+  m_fps = 0.0;	
+  //Start acqusition thread
+  AutoMutex aLock(m_cond.mutex());
+  m_wait_flag = false;
+  m_cond.broadcast();
+}
 //-----------------------------------------------------
 //
 //-----------------------------------------------------
@@ -303,7 +320,7 @@ void Camera::stopAcq()
 	//@BEGIN : trigger the acquisition
 	if(m_trigger_mode == IntTrigMult)	
 	{
-		DEB_TRACE() <<"Stop Internal Trigger Timer";
+		DEB_TRACE() <<"Stop Internal Trigger Timer (Multi)";
 		m_internal_trigger_timer->stop();
 	}
 	//@END
@@ -338,6 +355,9 @@ void Camera::getStatus(Camera::Status& status)
 {
 	DEB_MEMBER_FUNCT();
 	AutoMutex aLock(m_cond.mutex());
+	if(m_trigger_mode == IntTrigMult)
+		m_status = Camera::Ready;
+		
 	status = m_status;
 
 	DEB_RETURN() << DEB_VAR1(status);
@@ -352,14 +372,14 @@ bool Camera::readFrame(void *bptr, int& frame_nb)
 	Timestamp t0 = Timestamp::now();
 
 	//@BEGIN : Get frame from Driver/API & copy it into bptr already allocated 
-//	DEB_TRACE() << "Copy Buffer image into Lima Frame Ptr";
+	DEB_TRACE() << "Copy Buffer image into Lima Frame Ptr";
 	memcpy((unsigned short *) bptr, (unsigned short *) (m_frame.pBuffer + m_frame.usOffset), m_frame.uiImgSize);//we need a nb of BYTES .		
 	frame_nb = m_frame.uiIndex;
 	//@END	
 
-//	Timestamp t1 = Timestamp::now();
-//	double delta_time = t1 - t0;
-//	DEB_TRACE() << "readFrame : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
+	Timestamp t1 = Timestamp::now();
+	double delta_time = t1 - t0;
+	DEB_TRACE() << "readFrame : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
 	return false;
 }
 
@@ -409,7 +429,7 @@ void Camera::AcqThread::threadFunction()
 			}
 
 			//set status to exposure
-			m_cam.setStatus(Camera::Exposure, false);
+			////m_cam.setStatus(Camera::Exposure, false);
 			
 			//wait frame from TUCAM API ...
 			if(m_cam.m_acq_frame_nb == 0)//display TRACE only once ...
@@ -439,7 +459,7 @@ void Camera::AcqThread::threadFunction()
 				//@BEGIN : trigger the acquisition
 				if(m_cam.m_trigger_mode == IntTrigMult)	
 				{
-					DEB_TRACE() <<"Stop Internal Trigger Timer";
+					DEB_TRACE() <<"Stop Internal Trigger Timer (Multi)";
 					m_cam.m_internal_trigger_timer->stop();
 				}
 				//@END
@@ -456,7 +476,7 @@ void Camera::AcqThread::threadFunction()
 		
 				//Push the image buffer through Lima 
 				Timestamp t0 = Timestamp::now();
-				////DEB_TRACE() << "Declare a Lima new Frame Ready (" << m_cam.m_acq_frame_nb << ")";
+				DEB_TRACE() << "Declare a Lima new Frame Ready (" << m_cam.m_acq_frame_nb << ")";
 				HwFrameInfoType frame_info;
 				frame_info.acq_frame_nb = m_cam.m_acq_frame_nb;
 				continueFlag = buffer_mgr.newFrameReady(frame_info);
@@ -468,9 +488,10 @@ void Camera::AcqThread::threadFunction()
 				//wait latency after each frame , except for the last image 
 				if((!m_cam.m_nb_frames) || (m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && (m_cam.m_lat_time))
 				{
-					////DEB_TRACE() << "Wait latency time : " << m_cam.m_lat_time * 1000 << " (ms) ...";
+					DEB_TRACE() << "Wait latency time : " << m_cam.m_lat_time * 1000 << " (ms) ...";
 					usleep((DWORD) (m_cam.m_lat_time * 1000000));
-				}				
+				}		
+				DEB_TRACE() << "newFrameReady+latency : elapsed time = " << (int) (delta_time * 1000) << " (ms)";						
 			}
 			else
 			{
@@ -653,13 +674,13 @@ bool Camera::checkTrigMode(TrigMode mode)
 	switch(mode)
 	{
 		case IntTrig:
+		case IntTrigMult:
 		case ExtTrigMult:
 		case ExtGate:
 			valid_mode = true;
 			break;
 		case ExtTrigReadout:
 		case ExtTrigSingle:
-		case IntTrigMult:
 		default:
 			valid_mode = false;
 			break;
@@ -692,6 +713,12 @@ void Camera::setTrigMode(TrigMode mode)
 			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
 			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_SOFTWARE (EXPOSURE SOFTWARE)";
 			break;
+		case IntTrigMult:
+			tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+			tgrAttr.nExpMode = TUCTE_EXPTM;
+			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
+			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_SOFTWARE (EXPOSURE SOFTWARE) (MULTI)";
+			break;			
 		case ExtTrigMult :
 			tgrAttr.nTgrMode = TUCCM_TRIGGER_STANDARD;
 			tgrAttr.nExpMode = TUCTE_EXPTM;
@@ -705,7 +732,6 @@ void Camera::setTrigMode(TrigMode mode)
 			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE TRIGGER WIDTH: "<<tgrAttr.nExpMode<<")";
 			break;			
 		case ExtTrigSingle :		
-		case IntTrigMult:
 		case ExtTrigReadout:
 		default:
 			THROW_HW_ERROR(NotSupported) << DEB_VAR1(mode);

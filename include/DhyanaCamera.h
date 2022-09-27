@@ -185,7 +185,8 @@ public:
 private:
     //read/copy frame
     bool readFrame(void *bptr, int& frame_nb);
-    void setStatus(Camera::Status status, bool force);
+    void setStatus(Camera::Status status, bool force);    
+	void _startAcq();
     inline bool IS_POWER_OF_2(long x)
     {
         if( ((x ^ (x - 1)) == x + (x - 1)) && (x != 0) )

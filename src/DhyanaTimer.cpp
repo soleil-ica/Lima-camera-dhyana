@@ -73,13 +73,16 @@ CBaseTimer::~CBaseTimer()
 void CBaseTimer::start()
 {
 	DEB_MEMBER_FUNCT();
-	
+	////Timestamp t0 = Timestamp::now();		
 	m_nb_triggers = -1;
 	m_timer_id = timeSetEvent(m_period_ms, m_resolution, base_timer_proc, (DWORD_PTR)this, TIME_PERIODIC);
 	if (m_timer_id == NULL)
 	{
 		throw std::exception("Erreur timeSetEvent");
 	}
+	////Timestamp t1 = Timestamp::now();
+	////double delta_time = t1 - t0;
+	////DEB_TRACE() << "timeSetEvent : elapsed time = " << (int) (delta_time * 1000) << " (ms)";		
 }
 
 //---------------------------
@@ -121,15 +124,19 @@ CSoftTriggerTimer::~CSoftTriggerTimer()
 void CSoftTriggerTimer::on_timer()
 {
 	DEB_MEMBER_FUNCT();
-	//std::cout << "-------------------" << std::endl;
 	//Generate software trigger for each frame, except for the first image
 	//if((!m_cam.m_nb_frames || m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && (m_cam.m_trigger_mode == IntTrig))
 	{
 		//if(m_cam.getNbHwAcquiredFrames() > m_nb_triggers)
 		{
+			Timestamp t0 = Timestamp::now();						
 			m_nb_triggers++;
-			//DEB_TRACE() << "CSoftTriggerTimer::on_timer : DoSoftwareTrigger - "<<m_nb_triggers;
-			TUCAM_Cap_DoSoftwareTrigger(m_cam.m_opCam.hIdxTUCam);
+			////DEB_TRACE() << "CSoftTriggerTimer::on_timer : DoSoftwareTrigger - "<<m_nb_triggers;
+			TUCAM_Cap_DoSoftwareTrigger(m_cam.m_opCam.hIdxTUCam);	
+			stop();
+			Timestamp t1 = Timestamp::now();
+			double delta_time = t1 - t0;
+			DEB_TRACE() << "DoSoftwareTrigger : elapsed time = " << (int) (delta_time * 1000) << " (ms)";					
 		}
 	}
 
