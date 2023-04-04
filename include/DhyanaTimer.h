@@ -73,7 +73,10 @@ namespace lima
 				pThis->on_timer();
 				//std::cout<<" ----> base_timer_proc <------- [END]"<<std::endl;
 			}
-
+			//------------------------------------------------------------
+			void enable_oneshot_mode();
+			//------------------------------------------------------------
+			void disable_oneshot_mode();
 			//------------------------------------------------------------
 			void start();
 
@@ -88,6 +91,7 @@ namespace lima
 			long m_period_ms;
 			UINT m_resolution;
 			int  m_nb_triggers;
+			bool m_is_oneshot;
 		};
 
 		/******************************************************************

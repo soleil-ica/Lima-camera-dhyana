@@ -169,7 +169,7 @@ void Camera::prepareAcq()
 	//@BEGIN : Ensure that Acquisition is Started before return ...
 	DEB_TRACE() << "prepareAcq ...";
 	DEB_TRACE() << "Ensure that Acquisition is Started";
-	setStatus(Camera::Ready, false);
+	setStatus(Camera::Exposure, false);
 	if(NULL == m_hThdEvent)
 	{
 		m_frame.pBuffer = NULL;
@@ -209,9 +209,12 @@ void Camera::prepareAcq()
 	//@BEGIN : trigger the acquisition
 	if(m_trigger_mode == IntTrig)	
 	{
-		DEB_TRACE() <<"Start Internal Trigger Timer";
+		DEB_TRACE() <<"Start Internal Trigger Timer (Single)";
+		m_internal_trigger_timer->disable_oneshot_mode();
 		m_internal_trigger_timer->start();
 	}
+
+	
 	//@END
 	if(m_trigger_mode == IntTrigMult)
 	{
@@ -243,6 +246,7 @@ void Camera::startAcq()
 	if(m_trigger_mode == IntTrigMult)	
 	{
 		DEB_TRACE() <<"Start Internal Trigger Timer (Multi)";
+		m_internal_trigger_timer->enable_oneshot_mode();
 		m_internal_trigger_timer->start();
 		return;
 	}
@@ -266,6 +270,10 @@ void Camera::startAcq()
 	DEB_TRACE() << "startAcq : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
 }
 
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------
 void Camera::_startAcq()
 {
   DEB_MEMBER_FUNCT();
@@ -312,7 +320,7 @@ void Camera::stopAcq()
 	//@BEGIN : trigger the acquisition
 	if(m_trigger_mode == IntTrig)	
 	{
-		DEB_TRACE() <<"Stop Internal Trigger Timer";
+		DEB_TRACE() <<"Stop Internal Trigger Timer (Single)";
 		m_internal_trigger_timer->stop();
 	}
 	//@END
@@ -456,14 +464,6 @@ void Camera::AcqThread::threadFunction()
 				//DEB_TRACE() << "m_cam.m_frame.uiRsdSize = "	<< m_cam.m_frame.uiRsdSize;						// [in]  The frame reserved size    (how many frames do you want)
 				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
 
-				//@BEGIN : trigger the acquisition
-				if(m_cam.m_trigger_mode == IntTrigMult)	
-				{
-					DEB_TRACE() <<"Stop Internal Trigger Timer (Multi)";
-					m_cam.m_internal_trigger_timer->stop();
-				}
-				//@END
-	
 				// Grabbing was successful, process image
 				m_cam.setStatus(Camera::Readout, false);
 
