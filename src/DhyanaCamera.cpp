@@ -143,6 +143,8 @@ void Camera::init()
 	m_tgroutAttr3.nEdgeMode = TucamSignalEdge::kSignalEdgeRising;
 	m_tgroutAttr3.nDelayTm = 0;
 	m_tgroutAttr3.nWidth = 5000;
+
+	createPropertiesMap();
 }
 
 //-----------------------------------------------------
@@ -1351,3 +1353,313 @@ void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edg
 	  break;
   }
 }
+
+//-----------------------------------------------------
+// Get selected parameter value
+//----------------------------------------------------- 
+std::string Camera::getParameter(std::string parameter)
+{
+	DEB_MEMBER_FUNCT();
+    std::stringstream result;
+	//parameter format is: property_group:property_name
+	std::string delimiter = ":";
+	int pos_delim = parameter.find(delimiter);
+	std::string property_group = parameter.substr(0, parameter.find(delimiter));
+	std::string property_name = parameter.substr(pos_delim+1, parameter.length() -1 );
+	
+	//Check if the property group exists
+	if(m_properties_global_map.find(property_group) != m_properties_global_map.end())
+	{
+		std::pair <std::multimap<std::string,std::map<std::string, int>>::iterator,std::multimap<std::string,std::map<std::string, int>>::iterator> range;
+    	//Get a range containing all elements with the key property_group
+		range = m_properties_global_map.equal_range(property_group);
+
+		for (std::multimap<std::string,std::map<std::string, int>>::iterator it=range.first; it!=range.second; ++it)
+		{
+			//Check if the property name exists in the 
+			if(it->second.find(property_name) != it->second.end())
+			{
+				for (std::map<std::string, int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+				{
+					if(it2->first == property_name)
+					{
+						result << getCameraPropertiesValue(it->first, it2->first, it2->second).str();
+					}
+				}
+			}
+			else
+			{
+				THROW_HW_ERROR(Error) << property_name << " not available for the camera !";
+			}
+		}
+	}
+	else
+	{
+		THROW_HW_ERROR(Error) << property_group << " not available for the camera !";
+	}
+	
+    return result.str();
+}
+
+//----------------------------------------------------
+// @brief Get a list of all the camera parameters
+//----------------------------------------------------
+std::string Camera::getAllParameters()
+{
+	DEB_MEMBER_FUNCT();
+    std::stringstream result;
+
+	for (std::map<std::string,std::map<std::string, int>>::const_iterator it = m_properties_global_map.begin(); it != m_properties_global_map.end(); ++it)
+	{
+		for (std::map<std::string, int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+		{
+			result << getCameraPropertiesValue(it->first, it2->first, it2->second).str();
+		}
+	}
+	    
+	return result.str();
+}
+
+//-----------------------------------------------------
+// @brief set the value of the specified parameter
+//-----------------------------------------------------
+void Camera::setParameter(std::string parameter, double value)
+{
+	DEB_MEMBER_FUNCT();
+    std::stringstream result;
+
+	std::string delimiter = ":";
+	int pos_delim = parameter.find(delimiter);
+	std::string property_group = parameter.substr(0, parameter.find(delimiter));
+	std::string property_name = parameter.substr(pos_delim+1, parameter.length() -1 );
+
+	if(m_properties_global_map.find(property_group) != m_properties_global_map.end())
+	{
+		std::pair <std::multimap<std::string,std::map<std::string, int>>::iterator,std::multimap<std::string,std::map<std::string, int>>::iterator> range;
+    	//Get a range containing all elements with the key property_group
+		range = m_properties_global_map.equal_range(property_group);
+		
+		for (std::multimap<std::string,std::map<std::string, int>>::iterator it=range.first; it!=range.second; ++it)
+		{
+			if(it->second.find(property_name) != it->second.end())
+			{
+				for (std::map<std::string, int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
+				{
+					if(it2->first == property_name)
+					{
+						if(property_group == "PROP")
+						{
+							if(TUCAMRET_SUCCESS != TUCAM_Prop_SetValue(m_opCam.hIdxTUCam, it2->second, value))
+							{
+								THROW_HW_ERROR(Error) << "Unable to Write " << property_name << " to the camera !";
+							}
+						}
+						else if(property_group == "CAPA")
+						{
+							
+							if(TUCAMRET_SUCCESS != TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, (int)it2->second, value))
+							{
+								THROW_HW_ERROR(Error) << "Unable to Write " << property_name << " to the camera !";
+							}							
+						}
+						else if(property_group == "ROIS")
+						{
+							if(TUCAMRET_SUCCESS != TUCAM_Proc_Prop_SetValue(m_opCam.hIdxTUCam, it2->second, value))
+							{
+								THROW_HW_ERROR(Error) << "Unable to Write " << property_name << " to the camera !";
+							}							
+						}
+						else if(property_group == "VENDOR")
+						{
+							if(TUCAMRET_SUCCESS != TUCAM_Vendor_Prop_SetValue(m_opCam.hIdxTUCam, it2->second, value))
+							{
+								THROW_HW_ERROR(Error) << "Unable to Write " << property_name << " to the camera !";
+							}							
+						}
+					}
+				}
+			}
+			else
+			{
+				THROW_HW_ERROR(Error) << "Property: "<< property_name << " is not available for the camera !";
+			}
+		}
+	}
+	else
+	{
+		THROW_HW_ERROR(Error) << "Group of properties: " << property_group << " is not available for the camera !";
+	}
+}
+
+std::stringstream Camera::getCameraPropertiesValue(std::string property_group, std::string property_name, int property_id)
+{
+	DEB_MEMBER_FUNCT();
+	std::stringstream result;
+	double double_value = 0.0f;
+	int int_value = 0;
+
+	if(property_group == "PROP")
+	{
+		if(TUCAMRET_SUCCESS != TUCAM_Prop_GetValue(m_opCam.hIdxTUCam, property_id, &double_value))
+		{
+			DEB_TRACE() << "Unable to Read the property PROP:" << property_name <<  " from the camera !";
+		}
+		else
+		{
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
+		}
+	}
+	else if(property_group == "CAPA")
+	{
+		if(TUCAMRET_SUCCESS != TUCAM_Capa_GetValue(m_opCam.hIdxTUCam, property_id, &int_value))
+		{
+			DEB_TRACE() << "Unable to Read the property CAPA:" << property_name <<  " from the camera !";				
+		}
+		else
+		{
+			result << property_group << ":" << property_name << "=" <<  int_value << std::endl;
+		}
+	}
+	else if(property_group == "ROIS")
+	{
+		if(TUCAMRET_SUCCESS != TUCAM_Proc_Prop_GetValue(m_opCam.hIdxTUCam, property_id, &double_value))
+		{
+			DEB_TRACE() << "Unable to Read the property ROI:" << property_name <<  " from the camera !";				
+		}
+		else
+		{
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
+		}
+	}
+	else if(property_group == "VENDOR")
+	{
+		if(TUCAMRET_SUCCESS != TUCAM_Vendor_Prop_GetValue(m_opCam.hIdxTUCam, property_id, &double_value))
+		{
+			DEB_TRACE() << "Unable to Read the property VENDOR:" << property_name <<  " from the camera !";
+		}
+		else
+		{
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
+		}
+	}
+
+	return result;
+}
+
+void Camera::createPropertiesMap()
+{
+	DEB_MEMBER_FUNCT();
+	
+	// TUCAM_IDPROP: Properties control
+	m_control_properties["TUIDP_GLOBALGAIN"]         = 0x00;
+    m_control_properties["TUIDP_EXPOSURETM"]         = 0x01;
+    m_control_properties["TUIDP_BRIGHTNESS"]         = 0x02;
+    m_control_properties["TUIDP_BLACKLEVEL"]         = 0x03;
+    m_control_properties["TUIDP_TEMPERATURE"]        = 0x04;
+    m_control_properties["TUIDP_SHARPNESS"]          = 0x05;
+    m_control_properties["TUIDP_NOISELEVEL"]         = 0x06;
+    m_control_properties["TUIDP_HDR_KVALUE"]         = 0x07;
+    m_control_properties["TUIDP_GAMMA"]         	 = 0x08;
+    m_control_properties["TUIDP_CONTRAST"]           = 0x09;
+    m_control_properties["TUIDP_LFTLEVELS"]          = 0x0A;
+    m_control_properties["TUIDP_RGTLEVELS"]          = 0x0B;
+    m_control_properties["TUIDP_CHNLGAIN"]         	 = 0x0C;
+    m_control_properties["TUIDP_SATURATION"]         = 0x0D;
+    m_control_properties["TUIDP_CLRTEMPERATURE"]     = 0x0E;
+    m_control_properties["TUIDP_CLRMATRIX "]         = 0x0F;
+    m_control_properties["TUIDP_DPCLEVEL"]         	 = 0x10;
+    m_control_properties["TUIDP_BLACKLEVELHG"]       = 0x11;
+    m_control_properties["TUIDP_BLACKLEVELLG"]       = 0x12;
+	m_control_properties["TUIDP_POWEEFREQUENCY"]     = 0x13;
+	m_control_properties["TUIDP_HUE"]         		 = 0x14;
+	m_control_properties["TUIDP_LIGHT"]         	 = 0x15;
+    m_control_properties["TUIDP_ENHANCE_STRENGTH"]   = 0x16;
+    m_control_properties["TUIDP_NOISELEVEL_3D"]      = 0x17;
+    m_control_properties["TUIDP_FOCUS_POSITION"]     = 0x18;
+	m_control_properties["TUIDP_FRAME_RATE"]         = 0x19;
+    m_control_properties["TUIDP_ENDPROPERTY"]        = 0x1A;
+
+	//TUCAM_IDCAPA: Properties capability
+	m_capability_properties["TUIDC_RESOLUTION"]            = 0x00;
+    m_capability_properties["TUIDC_PIXELCLOCK"]            = 0x01;
+    m_capability_properties["TUIDC_BITOFDEPTH"]            = 0x02;
+    m_capability_properties["TUIDC_ATEXPOSURE"]            = 0x03;
+    m_capability_properties["TUIDC_HORIZONTAL"]            = 0x04;
+    m_capability_properties["TUIDC_VERTICAL"]              = 0x05;
+    m_capability_properties["TUIDC_ATWBALANCE"]            = 0x06;
+    m_capability_properties["TUIDC_FAN_GEAR"]              = 0x07;
+    m_capability_properties["TUIDC_ATLEVELS"]              = 0x08;
+    m_capability_properties["TUIDC_SHIFT"]                 = 0x09;
+    m_capability_properties["TUIDC_HISTC"]                 = 0x0A;
+    m_capability_properties["TUIDC_CHANNELS"]              = 0x0B;
+    m_capability_properties["TUIDC_ENHANCE"]               = 0x0C;
+    m_capability_properties["TUIDC_DFTCORRECTION"]         = 0x0D;
+    m_capability_properties["TUIDC_ENABLEDENOISE"]         = 0x0E;
+    m_capability_properties["TUIDC_FLTCORRECTION"]         = 0x0F;
+    m_capability_properties["TUIDC_RESTARTLONGTM"]         = 0x10;
+    m_capability_properties["TUIDC_DATAFORMAT"]            = 0x11;
+    m_capability_properties["TUIDC_DRCORRECTION"]          = 0x12;
+    m_capability_properties["TUIDC_VERCORRECTION"]         = 0x13;
+    m_capability_properties["TUIDC_MONOCHROME"]            = 0x14;
+    m_capability_properties["TUIDC_BLACKBALANCE"]          = 0x15;
+    m_capability_properties["TUIDC_IMGMODESELECT"]         = 0x16;
+    m_capability_properties["TUIDC_CAM_MULTIPLE"]          = 0x17;
+	m_capability_properties["TUIDC_ENABLEPOWEEFREQUENCY"]  = 0x18;
+	m_capability_properties["TUIDC_ROTATE_R90"]			   = 0x19;
+	m_capability_properties["TUIDC_ROTATE_L90"]			   = 0x1A;
+	m_capability_properties["TUIDC_NEGATIVE"]			   = 0x1B;
+	m_capability_properties["TUIDC_HDR"]				   = 0x1C;
+    m_capability_properties["TUIDC_ENABLEIMGPRO"]          = 0x1D;
+    m_capability_properties["TUIDC_ENABLELED"]             = 0x1E;
+    m_capability_properties["TUIDC_ENABLETIMESTAMP"]       = 0x1F;
+    m_capability_properties["TUIDC_ENABLEBLACKLEVEL"]      = 0x20;
+    m_capability_properties["TUIDC_ATFOCUS"]               = 0x21;
+    m_capability_properties["TUIDC_ATFOCUS_STATUS"]        = 0x22;
+	m_capability_properties["TUIDC_PGAGAIN"]               = 0x23;
+    m_capability_properties["TUIDC_ATEXPOSURE_MODE"]       = 0x24;
+    m_capability_properties["TUIDC_BINNING_SUM"]           = 0x25;
+    m_capability_properties["TUIDC_BINNING_AVG"]           = 0x26;
+    m_capability_properties["TUIDC_FOCUS_C_MOUNT"]         = 0x27;
+	m_capability_properties["TUIDC_ENABLEPI"]              = 0x28;
+    m_capability_properties["TUIDC_ATEXPOSURE_STATUS"]     = 0x29;
+    m_capability_properties["TUIDC_ATWBALANCE_STATUS"]     = 0x2A;
+	m_capability_properties["TUIDC_TESTIMGMODE"]           = 0x2B;
+	m_capability_properties["TUIDC_SENSORRESET"]           = 0x2C;
+	m_capability_properties["TUIDC_PGAHIGH"]               = 0x2D;
+	m_capability_properties["TUIDC_PGALOW"]                = 0x2E;
+	m_capability_properties["TUIDC_PIXCLK1_EN"]            = 0x2F;
+	m_capability_properties["TUIDC_PIXCLK2_EN"]            = 0x30;
+	m_capability_properties["TUIDC_ATLEVELGEAR"]           = 0x31;
+    m_capability_properties["TUIDC_ENDCAPABILITY"]         = 0x32;
+
+	//TUCAM_IDPPROP : calculate roi id
+	m_roi_properties["TUIDPP_EDF_QUALITY"] = 0;
+	m_roi_properties["TUIDPP_STITCH_SPEED"] = 1;
+	m_roi_properties["TUIDPP_STITCH_BGC_RED"] = 2;
+	m_roi_properties["TUIDPP_STITCH_BGC_GREEN"] = 3;
+	m_roi_properties["TUIDPP_STITCH_BGC_BLUE"] = 4;
+	m_roi_properties["TUIDPP_STITCH_VALID"] = 5;
+	m_roi_properties["TUIDPP_STITCH_AREA_X"] = 6;
+	m_roi_properties["TUIDPP_STITCH_AREA_Y"] = 7;
+	m_roi_properties["TUIDPP_STITCH_NEXT_X"] = 8;
+	m_roi_properties["TUIDPP_STITCH_NEXT_Y"] = 9;
+	m_roi_properties["TUIDPP_ENDPPROPERTY"] = 10;
+
+	//TUCAM_IDVPROP : Vendor property
+ 	m_vendor_properties["TUIDV_ADDR_FLASH"]            = 0x00;
+	m_vendor_properties["TUIDV_ODDEVENH"]              = 0x01;
+	m_vendor_properties["TUIDV_ODDEVENL"]              = 0x02;
+	m_vendor_properties["TUIDV_HDRHGBOFFSET"]          = 0x03;
+	m_vendor_properties["TUIDV_HDRLGBOFFSET"]          = 0x04;
+	m_vendor_properties["TUIDV_CMSHGBOFFSET"]          = 0x05;
+	m_vendor_properties["TUIDV_CMSLGBOFFSET"]          = 0x06;
+	m_vendor_properties["TUIDV_FPNENABLE"]             = 0x07;
+    m_vendor_properties["TUIDV_ENDVPROPERTY"]          = 0x08;
+
+	m_properties_global_map.insert(std::make_pair("PROP", m_control_properties));
+	m_properties_global_map.insert(std::make_pair("ROI", m_roi_properties));
+	m_properties_global_map.insert(std::make_pair("VENDOR", m_vendor_properties));
+	m_properties_global_map.insert(std::make_pair("CAPA", m_capability_properties));
+}
+
+
