@@ -1354,23 +1354,29 @@ void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edg
   }
 }
 
+//-----------------------------------------------------
+// Get selected parameter value
+//----------------------------------------------------- 
 std::string Camera::getParameter(std::string parameter)
 {
 	DEB_MEMBER_FUNCT();
     std::stringstream result;
-	
+	//parameter format is: property_group:property_name
 	std::string delimiter = ":";
 	int pos_delim = parameter.find(delimiter);
 	std::string property_group = parameter.substr(0, parameter.find(delimiter));
 	std::string property_name = parameter.substr(pos_delim+1, parameter.length() -1 );
 	
+	//Check if the property group exists
 	if(m_properties_global_map.find(property_group) != m_properties_global_map.end())
 	{
 		std::pair <std::multimap<std::string,std::map<std::string, int>>::iterator,std::multimap<std::string,std::map<std::string, int>>::iterator> range;
-    	range = m_properties_global_map.equal_range(property_group);
+    	//Get a range containing all elements with the key property_group
+		range = m_properties_global_map.equal_range(property_group);
 
 		for (std::multimap<std::string,std::map<std::string, int>>::iterator it=range.first; it!=range.second; ++it)
 		{
+			//Check if the property name exists in the 
 			if(it->second.find(property_name) != it->second.end())
 			{
 				for (std::map<std::string, int>::const_iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2)
@@ -1395,6 +1401,9 @@ std::string Camera::getParameter(std::string parameter)
     return result.str();
 }
 
+//----------------------------------------------------
+// @brief Get a list of all the camera parameters
+//----------------------------------------------------
 std::string Camera::getAllParameters()
 {
 	DEB_MEMBER_FUNCT();
@@ -1411,6 +1420,9 @@ std::string Camera::getAllParameters()
 	return result.str();
 }
 
+//-----------------------------------------------------
+// @brief set the value of the specified parameter
+//-----------------------------------------------------
 void Camera::setParameter(std::string parameter, double value)
 {
 	DEB_MEMBER_FUNCT();
@@ -1424,7 +1436,8 @@ void Camera::setParameter(std::string parameter, double value)
 	if(m_properties_global_map.find(property_group) != m_properties_global_map.end())
 	{
 		std::pair <std::multimap<std::string,std::map<std::string, int>>::iterator,std::multimap<std::string,std::map<std::string, int>>::iterator> range;
-    	range = m_properties_global_map.equal_range(property_group);
+    	//Get a range containing all elements with the key property_group
+		range = m_properties_global_map.equal_range(property_group);
 		
 		for (std::multimap<std::string,std::map<std::string, int>>::iterator it=range.first; it!=range.second; ++it)
 		{
@@ -1493,7 +1506,7 @@ std::stringstream Camera::getCameraPropertiesValue(std::string property_group, s
 		}
 		else
 		{
-			result << property_group << ":" << property_name << " = " <<  double_value << std::endl;
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
 		}
 	}
 	else if(property_group == "CAPA")
@@ -1504,7 +1517,7 @@ std::stringstream Camera::getCameraPropertiesValue(std::string property_group, s
 		}
 		else
 		{
-			result << property_group << ":" << property_name << " = " <<  int_value << std::endl;
+			result << property_group << ":" << property_name << "=" <<  int_value << std::endl;
 		}
 	}
 	else if(property_group == "ROIS")
@@ -1515,7 +1528,7 @@ std::stringstream Camera::getCameraPropertiesValue(std::string property_group, s
 		}
 		else
 		{
-			result << property_group << ":" << property_name << " = " <<  double_value << std::endl;
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
 		}
 	}
 	else if(property_group == "VENDOR")
@@ -1526,7 +1539,7 @@ std::stringstream Camera::getCameraPropertiesValue(std::string property_group, s
 		}
 		else
 		{
-			result << property_group << ":" << property_name << " = " <<  double_value << std::endl;
+			result << property_group << ":" << property_name << "=" <<  double_value << std::endl;
 		}
 	}
 
