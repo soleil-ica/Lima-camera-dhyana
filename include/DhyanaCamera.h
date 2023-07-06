@@ -183,9 +183,9 @@ public:
 	TUCAM_FRAME         m_frame; // TUCAM frame structure
 	HANDLE              m_hThdEvent; // TUCAM handle event   
 
-    std::string getParameter(std::string parameter);
+    std::string getParameter(std::string parameter_name);
     std::string getAllParameters();
-    void setParameter(std::string parameter, double value);
+    void setParameter(std::string parameter_name, std::string value_str);
     
 private:
     //read/copy frame
@@ -204,8 +204,8 @@ private:
         }
     }
 
-    void createPropertiesMap();
-    std::stringstream getCameraPropertiesValue(std::string property_group, std::string property_name, int property_id);
+    void createParametersMap();
+    std::stringstream getParameterValue(std::string parameter_name, int parameter_id);
 
     //////////////////////////////
     // -- dhyana specific members
@@ -240,17 +240,9 @@ private:
     TUCAM_TRGOUT_ATTR m_tgroutAttr1;
     TUCAM_TRGOUT_ATTR m_tgroutAttr2;
     TUCAM_TRGOUT_ATTR m_tgroutAttr3;
-
-    //process image properties group
-    std::map<std::string, int> m_roi_properties;
-    //properties control group
-    std::map<std::string, int> m_control_properties;
-    //vendor control properties group
-    std::map<std::string, int> m_vendor_properties;
-    //Capability control properties group
-    std::map<std::string, int> m_capability_properties;
-    //All properties groups
-    std::multimap<std::string,std::map<std::string, int>> m_properties_global_map;
+   
+    //All camera available properties/parameters map
+    std::map<std::string, int> m_parameters_map;
 
 } ;
 
