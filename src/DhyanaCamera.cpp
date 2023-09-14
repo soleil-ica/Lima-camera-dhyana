@@ -1556,7 +1556,24 @@ void Camera::createParametersMap()
     m_parameters_map["TUIDP_NOISELEVEL_3D"]      = 0x17;
     m_parameters_map["TUIDP_FOCUS_POSITION"]     = 0x18;
 	m_parameters_map["TUIDP_FRAME_RATE"]         = 0x19;
-    m_parameters_map["TUIDP_ENDPROPERTY"]        = 0x1A;
+	m_parameters_map["TUIDP_START_TIME"]         = 0x1A;
+	m_parameters_map["TUIDP_FRAME_NUMBER"]       = 0x1B;
+	m_parameters_map["TUIDP_INTERVAL_TIME"]      = 0x1C;
+	m_parameters_map["TUIDP_GPS_APPLY"]          = 0x1D;
+	m_parameters_map["TUIDP_AMB_TEMPERATURE"]    = 0x1E;
+	m_parameters_map["TUIDP_AMB_HUMIDITY"]       = 0x1F;
+	m_parameters_map["TUIDP_AUTO_CTRLTEMP"]      = 0x20;
+	m_parameters_map["TUIDP_AVERAGEGRAY"]        = 0x21;
+	m_parameters_map["TUIDP_AVERAGEGRAYTHD"]     = 0x22;
+	m_parameters_map["TUIDP_ENHANCETHD"]         = 0x23;
+	m_parameters_map["TUIDP_ENHANCEPARA"]        = 0x24;
+	m_parameters_map["TUIDP_EXPOSUREMAX"]        = 0x25;
+	m_parameters_map["TUIDP_EXPOSUREMIN"]        = 0x26;
+	m_parameters_map["TUIDP_GAINMAX"]        	 = 0x27;
+	m_parameters_map["TUIDP_GAINMIN"]            = 0x28;
+	m_parameters_map["TUIDP_THROUGHFOGPARA"]     = 0x29;
+    m_parameters_map["TUIDP_ENDPROPERTY"]        = 0x2A;
+	
 	//TUCAM_IDCAPA: Capability Properties 
 	m_parameters_map["TUIDC_RESOLUTION"]            = 0x00;
     m_parameters_map["TUIDC_PIXELCLOCK"]            = 0x01;
@@ -1608,7 +1625,23 @@ void Camera::createParametersMap()
 	m_parameters_map["TUIDC_PIXCLK1_EN"]            = 0x2F;
 	m_parameters_map["TUIDC_PIXCLK2_EN"]            = 0x30;
 	m_parameters_map["TUIDC_ATLEVELGEAR"]           = 0x31;
-    m_parameters_map["TUIDC_ENDCAPABILITY"]         = 0x32;
+	m_parameters_map["TUIDC_ENABLEDSNU"]            = 0x32;
+	m_parameters_map["TUIDC_ENABLEOVERLAP"]         = 0x33;
+	m_parameters_map["TUIDC_CAMSTATE"]              = 0x34;
+	m_parameters_map["TUIDC_ENABLETRIOUT"]          = 0x35;
+	m_parameters_map["TUIDC_ROLLINGSCANMODE"]       = 0x36;
+	m_parameters_map["TUIDC_ROLLINGSCANLTD"]        = 0x37;
+	m_parameters_map["TUIDC_ROLLINGSCANSLIT"]       = 0x38;
+	m_parameters_map["TUIDC_ROLLINGSCANDIR"]        = 0x39;
+	m_parameters_map["TUIDC_ROLLINGSCANRESET"]      = 0x3A;
+	m_parameters_map["TUIDC_ENABLETEC"]           	= 0x3B;
+	m_parameters_map["TUIDC_ENABLEBLC"]           	= 0x3C;
+	m_parameters_map["TUIDC_ENABLETHROUGHFOG"]      = 0x3D;
+	m_parameters_map["TUIDC_ENABLEGAMMA"]           = 0x3E;
+	m_parameters_map["TUIDC_CAMPARASAVE"]           = 0x3F;
+	m_parameters_map["TUIDC_CAMPARALOAD"]           = 0x40;
+    m_parameters_map["TUIDC_ENDCAPABILITY"]         = 0x41;
+	
 	//TUCAM_IDPPROP : Process image Properties
 	m_parameters_map["TUIDPP_EDF_QUALITY"] 		= 0;
 	m_parameters_map["TUIDPP_STITCH_SPEED"] 	= 1;
@@ -1621,6 +1654,7 @@ void Camera::createParametersMap()
 	m_parameters_map["TUIDPP_STITCH_NEXT_X"] 	= 8;
 	m_parameters_map["TUIDPP_STITCH_NEXT_Y"] 	= 9;
 	m_parameters_map["TUIDPP_ENDPPROPERTY"] 	= 10;
+	
 	//TUCAM_IDVPROP : Vendor Properties
  	m_parameters_map["TUIDV_ADDR_FLASH"]        = 0x00;
 	m_parameters_map["TUIDV_ODDEVENH"]          = 0x01;
@@ -1630,7 +1664,19 @@ void Camera::createParametersMap()
 	m_parameters_map["TUIDV_CMSHGBOFFSET"]      = 0x05;
 	m_parameters_map["TUIDV_CMSLGBOFFSET"]      = 0x06;
 	m_parameters_map["TUIDV_FPNENABLE"]      	= 0x07;
-    m_parameters_map["TUIDV_ENDVPROPERTY"]      = 0x08;
+	m_parameters_map["TUIDV_WORKING_TIME"]      = 0x08;
+	m_parameters_map["TUIDV_CALC_DSNU"]      	= 0x09;
+	m_parameters_map["TUIDV_CALC_PRNU"]      	= 0x0A;
+	m_parameters_map["TUIDV_CALC_DPC"]      	= 0x0B;
+	m_parameters_map["TUIDV_CALC_STOP"]      	= 0x0C;
+	m_parameters_map["TUIDV_CALC_STATE"]      	= 0x0D;
+	m_parameters_map["TUIDV_HDR_LVALUE"]      	= 0x0E;
+	m_parameters_map["TUIDV_HDR_HVALUE"]      	= 0x0F;
+	m_parameters_map["TUIDV_FW_CHECK"]      	= 0x10;
+	m_parameters_map["TUIDV_HIGHSPEEDHGBOFFSET"]= 0x11;
+	m_parameters_map["TUIDV_HIGHSPEEDLGBOFFSET"]= 0x12;
+	m_parameters_map["TUIDV_TEMPERATURE_OFFSET"]= 0x13;
+    m_parameters_map["TUIDV_ENDVPROPERTY"]      = 0x14;
 }
 
 

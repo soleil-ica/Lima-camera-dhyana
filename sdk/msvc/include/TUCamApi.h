@@ -63,8 +63,13 @@ TUCAM_API TUCAMRET TUCAM_Prop_GetValueText      (HDTUCAM hTUCam, PTUCAM_VALUE_TE
 TUCAM_API TUCAMRET TUCAM_Buf_Alloc              (HDTUCAM hTUCam, PTUCAM_FRAME pFrame);                              // call TUCAM_Buf_Release() to free.
 TUCAM_API TUCAMRET TUCAM_Buf_Release            (HDTUCAM hTUCam);
 TUCAM_API TUCAMRET TUCAM_Buf_AbortWait          (HDTUCAM hTUCam);                                                   // call after TUCAM_Buf_WaitForFrame()
-TUCAM_API TUCAMRET TUCAM_Buf_WaitForFrame       (HDTUCAM hTUCam, PTUCAM_FRAME pFrame);                              // call after TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Buf_WaitForFrame       (HDTUCAM hTUCam, PTUCAM_FRAME pFrame, INT32 nTimeOut = 1000);       // call after TUCAM_Cap_Start()
 TUCAM_API TUCAMRET TUCAM_Buf_CopyFrame          (HDTUCAM hTUCam, PTUCAM_FRAME pFrame);                              // call after TUCAM_Buf_WaitForFrame()
+
+// Buffer CallBack Function
+TUCAM_API TUCAMRET TUCAM_Buf_DataCallBack       (HDTUCAM hTUCam, BUFFER_CALLBACK cbBuffer, void *pUserContex);
+// Get Buffer Data
+TUCAM_API TUCAMRET TUCAM_Buf_GetData            (HDTUCAM hTUCam, PTUCAM_RAWIMG_HEADER pFrame);
 
 //
 // Capturing control
