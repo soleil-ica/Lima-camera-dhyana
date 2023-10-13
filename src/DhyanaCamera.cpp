@@ -1265,7 +1265,6 @@ void Camera::setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge,
 	case 1:
 
 		m_tgroutAttr2.nTgrOutMode = signal;
-		m_tgroutAttr2.nTgrOutMode = signal;
 		m_tgroutAttr2.nEdgeMode = edge;
 		m_tgroutAttr2.nDelayTm = delay * 1000;
 		m_tgroutAttr2.nWidth = width * 1000;
