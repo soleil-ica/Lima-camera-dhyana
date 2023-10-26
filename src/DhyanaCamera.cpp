@@ -1354,6 +1354,25 @@ void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edg
 }
 
 //-----------------------------------------------------
+// is trigOutput parameter is available
+//----------------------------------------------------- 
+bool Camera::is_trigOutput_available()
+{
+	DEB_MEMBER_FUNCT();
+	
+	bool is_triOutput_available = true;
+
+	TUCAM_TRGOUT_ATTR tgroutAttr;
+	if (TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &tgroutAttr))
+	{
+		is_triOutput_available = false;
+	}
+	
+	return is_triOutput_available;
+}
+
+
+//-----------------------------------------------------
 // Get selected parameter value
 //----------------------------------------------------- 
 std::string Camera::getParameter(std::string parameter_name)
