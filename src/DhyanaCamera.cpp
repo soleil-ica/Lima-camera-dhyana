@@ -92,7 +92,6 @@ Camera::~Camera()
 void Camera::init()
 {
 	DEB_MEMBER_FUNCT();
-
 	DEB_TRACE() << "Initialize TUCAM API ...";
 	m_itApi.pstrConfigPath = NULL;//Camera parameters input saving path is not defined
 	m_itApi.uiCamCount = 0;
@@ -1225,6 +1224,42 @@ void Camera::getFPS(double& fps) ///< [out] last computed fps
     DEB_MEMBER_FUNCT();
 
     fps = m_fps;
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------  
+void Camera::setTecMode(unsigned mode)
+{
+	DEB_MEMBER_FUNCT();
+
+	if(mode != 0 && mode != 1)
+	{
+		THROW_HW_ERROR(Error) << "Available mode values are :\n0:OFF\n1:ON";
+	}
+
+	int nVal = (int) mode;
+	if(TUCAMRET_SUCCESS != TUCAM_Capa_SetValue(m_opCam.hIdxTUCam, TUIDC_ENABLETEC, nVal))
+	{
+		DEB_TRACE() << "Unable to Write TUIDC_ENABLETEC from the camera!";
+		THROW_HW_ERROR(Error) << "Unable to Write TUIDC_ENABLETEC to the camera !";
+	}
+}
+
+//-----------------------------------------------------
+//
+//-----------------------------------------------------  
+void Camera::getTecMode(unsigned& mode)
+{
+	DEB_MEMBER_FUNCT();
+
+	int nVal;
+	if(TUCAMRET_SUCCESS != TUCAM_Capa_GetValue(m_opCam.hIdxTUCam, TUIDC_ENABLETEC, &nVal))
+	{
+		DEB_TRACE() << "Unable to Read TUIDC_ENABLETEC from the camera!";
+		THROW_HW_ERROR(Error) << "Unable to Read TUIDC_ENABLETEC from the camera !";
+	}
+	mode = (unsigned) nVal;
 }
 
 //-----------------------------------------------------

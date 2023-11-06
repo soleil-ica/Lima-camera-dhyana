@@ -169,7 +169,9 @@ public:
     void getFirmwareVersion(std::string& version);
     bool isAcqRunning() const;
 
-    void getFPS(double& fps);	
+    void getFPS(double& fps);
+    void setTecMode(unsigned mode);
+    void getTecMode(unsigned& mode);	
     void getTriggerMode(TucamTriggerMode& mode);
     void setTriggerMode(TucamTriggerMode mode);
     void getTriggerEdge(TucamTriggerEdge& edge);
