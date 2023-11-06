@@ -178,6 +178,7 @@ public:
     void setTriggerEdge(TucamTriggerEdge edge);
     void getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edge, int& delay, int& width);
     void setOutputSignal(int port, TucamSignal signal, TucamSignalEdge edge=kSignalEdgeRising, int delay=-1, int width=-1);
+    bool is_trigOutput_available();
 
 	//TUCAM stuff, use TUCAM notations !
 	TUCAM_INIT          m_itApi; // TUCAM handle Api

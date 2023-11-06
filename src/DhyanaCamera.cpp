@@ -1389,6 +1389,25 @@ void Camera::getOutputSignal(int port, TucamSignal& signal, TucamSignalEdge& edg
 }
 
 //-----------------------------------------------------
+// is trigger out attribute is available
+//----------------------------------------------------- 
+bool Camera::is_trigOutput_available()
+{
+	DEB_MEMBER_FUNCT();	
+	bool is_trigOutput_available = true;
+
+	TUCAM_TRGOUT_ATTR tgroutAttr;
+	if (TUCAMRET_SUCCESS != TUCAM_Cap_GetTriggerOut(m_opCam.hIdxTUCam, &tgroutAttr))
+	{
+		is_trigOutput_available = false;
+		DEB_TRACE() << "Unable to get trigger out attribute from the camera!";
+	}
+	
+	return is_trigOutput_available;
+}
+
+
+//-----------------------------------------------------
 // Get selected parameter value
 //----------------------------------------------------- 
 std::string Camera::getParameter(std::string parameter_name)
