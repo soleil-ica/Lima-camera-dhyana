@@ -1,6 +1,6 @@
 /************************************************************************
 
-*  Copyright (C) Xintu Photonics Co.,Ltd. 2012-2018. All rights reserved.
+*  Copyright (C) Xintu Photonics Co.,Ltd. 2012-2025. All rights reserved.
 
 *  @file      TuCamApi.h
 
@@ -10,7 +10,7 @@
 
 *  @author    Zhang Ren
 
-*  @date      2015-10-13 
+*  @date      2023-01-05 
 
 ************************************************************************/
 #ifndef _TUCAM_API_H_
@@ -31,7 +31,7 @@
 //
 // Initialize uninitialize and misc.
 //
-TUCAM_API TUCAMRET TUCAM_Api_Init               (PTUCAM_INIT pInitParam);
+TUCAM_API TUCAMRET TUCAM_Api_Init               (PTUCAM_INIT pInitParam, INT32 nTimeOut = TUCAM_TIMEOUT);
 TUCAM_API TUCAMRET TUCAM_Api_Uninit             ();
 
 TUCAM_API TUCAMRET TUCAM_Dev_Open               (PTUCAM_OPEN pOpenParam);   
@@ -63,7 +63,7 @@ TUCAM_API TUCAMRET TUCAM_Prop_GetValueText      (HDTUCAM hTUCam, PTUCAM_VALUE_TE
 TUCAM_API TUCAMRET TUCAM_Buf_Alloc              (HDTUCAM hTUCam, PTUCAM_FRAME pFrame);                              // call TUCAM_Buf_Release() to free.
 TUCAM_API TUCAMRET TUCAM_Buf_Release            (HDTUCAM hTUCam);
 TUCAM_API TUCAMRET TUCAM_Buf_AbortWait          (HDTUCAM hTUCam);                                                   // call after TUCAM_Buf_WaitForFrame()
-TUCAM_API TUCAMRET TUCAM_Buf_WaitForFrame       (HDTUCAM hTUCam, PTUCAM_FRAME pFrame, INT32 nTimeOut = 1000);       // call after TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Buf_WaitForFrame       (HDTUCAM hTUCam, PTUCAM_FRAME pFrame, INT32 nTimeOut = TUCAM_TIMEOUT); // call after TUCAM_Cap_Start()
 TUCAM_API TUCAMRET TUCAM_Buf_CopyFrame          (HDTUCAM hTUCam, PTUCAM_FRAME pFrame);                              // call after TUCAM_Buf_WaitForFrame()
 
 // Buffer CallBack Function
@@ -76,7 +76,12 @@ TUCAM_API TUCAMRET TUCAM_Buf_GetData            (HDTUCAM hTUCam, PTUCAM_RAWIMG_H
 //
 // ROI
 TUCAM_API TUCAMRET TUCAM_Cap_SetROI             (HDTUCAM hTUCam, TUCAM_ROI_ATTR roiAttr);                           // call before TUCAM_Cap_Start()
-TUCAM_API TUCAMRET TUCAM_Cap_GetROI             (HDTUCAM hTUCam, PTUCAM_ROI_ATTR pRoiAttr);         
+TUCAM_API TUCAMRET TUCAM_Cap_GetROI             (HDTUCAM hTUCam, PTUCAM_ROI_ATTR pRoiAttr);   
+
+// MultiROI
+TUCAM_API TUCAMRET TUCAM_Cap_SetMultiROI        (HDTUCAM hTUCam, TUCAM_MULTIROI_ATTR multiroiAttr);
+TUCAM_API TUCAMRET TUCAM_Cap_GetMultiROI        (HDTUCAM hTUCam, PTUCAM_MULTIROI_ATTR pmultiroiAttr);
+
 // Trigger
 TUCAM_API TUCAMRET TUCAM_Cap_SetTrigger         (HDTUCAM hTUCam, TUCAM_TRIGGER_ATTR tgrAttr);                       // call before TUCAM_Cap_Start()
 TUCAM_API TUCAMRET TUCAM_Cap_GetTrigger         (HDTUCAM hTUCam, PTUCAM_TRIGGER_ATTR pTgrAttr);
@@ -168,5 +173,38 @@ TUCAM_API TUCAMRET TUCAM_Proc_CopyFrame         (HDTUCAM hTUCam, TUCAM_FRAME **p
 // Config the AF platform
 TUCAM_API TUCAMRET TUCAM_Vendor_AFPlatform      (HDTUCAM hTUCam, NVILen *pLen);
 
+// Any-BIN
+TUCAM_API TUCAMRET TUCAM_Cap_SetBIN             (HDTUCAM hTUCam, TUCAM_BIN_ATTR binAttr);                           // call before TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Cap_GetBIN             (HDTUCAM hTUCam, PTUCAM_BIN_ATTR pBinAttr);
+
+// Subtract background
+TUCAM_API TUCAMRET TUCAM_Cap_SetBackGround      (HDTUCAM hTUCam, TUCAM_IMG_BACKGROUND bgAttr);                     // call before TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Cap_GetBackGround      (HDTUCAM hTUCam, PTUCAM_IMG_BACKGROUND pBGAttr);
+
+// Math
+TUCAM_API TUCAMRET TUCAM_Cap_SetMath            (HDTUCAM hTUCam, TUCAM_IMG_MATH mathAttr);                         // call before TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Cap_GetMath            (HDTUCAM hTUCam, PTUCAM_IMG_MATH pMathAttr);
+
+// GenICam Element Attribute pName
+TUCAM_API TUCAMRET TUCAM_GenICam_ElementAttr    (HDTUCAM hTUCam, PTUCAM_ELEMENT pNote, PCHAR pName, TUXML_DEVICE Xml = TU_CAMERA_XML);
+
+// GenICam Element Attribute Next
+TUCAM_API TUCAMRET TUCAM_GenICam_ElementAttrNext(HDTUCAM hTUCam, PTUCAM_ELEMENT pNote, PCHAR pName, TUXML_DEVICE Xml = TU_CAMERA_XML);
+
+// GenICam Set Element Value 
+TUCAM_API TUCAMRET TUCAM_GenICam_SetElementValue(HDTUCAM hTUCam, PTUCAM_ELEMENT pNote, TUXML_DEVICE Xml = TU_CAMERA_XML);
+
+// GenICam Get Element Value 
+TUCAM_API TUCAMRET TUCAM_GenICam_GetElementValue(HDTUCAM hTUCam, PTUCAM_ELEMENT pNote, TUXML_DEVICE Xml = TU_CAMERA_XML);
+
+// GenICam Set Register Value 
+TUCAM_API TUCAMRET TUCAM_GenICam_SetRegisterValue(HDTUCAM hTUCam, PUCHAR pBuffer, INT64 nAddress, INT64 nLength);
+
+// GenICam Get Register Value 
+TUCAM_API TUCAMRET TUCAM_GenICam_GetRegisterValue(HDTUCAM hTUCam, PUCHAR pBuffer, INT64 nAddress, INT64 nLength);
+
+// Only CXP Support
+TUCAM_API TUCAMRET TUCAM_Cap_AnnounceBuffer      (HDTUCAM hTUCam, UINT32 uiSize, void *pBuf);                        // call before TUCAM_Cap_Start()
+TUCAM_API TUCAMRET TUCAM_Cap_ClearBuffer         (HDTUCAM hTUCam);
 
 #endif      // _TUCAM_API_H_

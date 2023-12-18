@@ -1,6 +1,6 @@
 /************************************************************************
 
-*  Copyright (C) Tucsen Photonics Co.,Ltd. 2012-2016. All rights reserved.
+*  Copyright (C) Tucsen Photonics Co.,Ltd. 2012-2025. All rights reserved.
 
 *  @file      TUDefine.h
 
@@ -10,7 +10,7 @@
 
 *  @author    Zhang Ren
 
-*  @date      2015-10-12 
+*  @date      2023-01-05
 
 ************************************************************************/
 #ifndef _TUDEFINE_H_
@@ -246,6 +246,12 @@ typedef signed char         BOOL;
 #define TUCAM_DELBUF(pBuf)  {if(NULL != pBuf) delete [] pBuf; pBuf = NULL;}
 #endif
 
+#ifndef TUCAM_FREEBUF
+#define TUCAM_FREEBUF(pBuf) {if(NULL != pBuf) free(pBuf); pBuf = NULL;}
+#endif
+
+#define TUCAM_TIMEOUT       1000 // TimeOut 1000ms
+
 #define TUSN_SIZE           64
 #define TUCODE_SIZE         128
 
@@ -378,7 +384,10 @@ typedef enum
 	TUIDI_ENV_TEMPERATURE       = 0x15,             // the get environment temperature
     TUIDI_DEVICE_ADDRESS        = 0x16,             // the USB device address
     TUIDI_USB_PORT_ID           = 0x17,             // the USB port id
-    TUIDI_ENDINFO               = 0x18,             // the string id end
+	TUIDI_CONNECTSTATUS         = 0x18,             // the camera whether connection
+	TUIDI_TOTALBUFFRAMES        = 0x19,             // the USB total buffer frames
+	TUIDI_CURRENTBUFFRAMES      = 0x1A,             // the USB current buffer frames
+    TUIDI_ENDINFO               = 0x1B,             // the string id end
 }TUCAM_IDINFO;
 
 // typedef enum capability id 
@@ -447,9 +456,15 @@ typedef enum
 	TUIDC_ENABLEBLC             = 0x3C,             // id capability backlight compensation enable
 	TUIDC_ENABLETHROUGHFOG      = 0x3D,             // id capability electronic through fog enable
 	TUIDC_ENABLEGAMMA           = 0x3E,             // id capability gamma enable
-	TUIDC_CAMPARASAVE           = 0x3F,             // id capability camera parameter save
-	TUIDC_CAMPARALOAD           = 0x40,             // id capability camera parameter load
-    TUIDC_ENDCAPABILITY         = 0x41,             // id capability end 
+	TUIDC_ENABLEFILTER          = 0x3F,             // id capability filter enable
+	TUIDC_ENABLEHLC             = 0x40,             // id capability strong light inhibition enable
+	TUIDC_CAMPARASAVE           = 0x41,             // id capability camera parameter save
+	TUIDC_CAMPARALOAD           = 0x42,             // id capability camera parameter load
+    TUIDC_ENABLEISP             = 0x43,             // id capability camera isp enable 
+	TUIDC_BUFFERHEIGHT          = 0x44,             // id capability buffer height
+	TUIDC_VISIBILITY            = 0x45,             // id capability visibility
+    TUIDC_SHUTTER               = 0x46,             // id capability shutter mode 
+    TUIDC_ENDCAPABILITY         = 0x47,             // id capability end 
 }TUCAM_IDCAPA;
 
 // Fix 
@@ -506,8 +521,10 @@ typedef enum
 	TUIDP_GAINMAX               = 0x27,             // id property max gain setting
 	TUIDP_GAINMIN               = 0x28,             // id property min gain setting
 	TUIDP_THROUGHFOGPARA        = 0x29,             // id property through fog parameter setting
+    TUIDP_ATLEVEL_PERCENTAGE    = 0x2A,             // id property auto levels ignore percentage
+    TUIDP_TEMPERATURE_TARGET    = 0x2B,             // id property temperature target
 
-	TUIDP_ENDPROPERTY           = 0x2A,             // id property end 
+	TUIDP_ENDPROPERTY           = 0x2C,             // id property end 
 }TUCAM_IDPROP;
 
 // typedef enum vendor property id
@@ -714,6 +731,7 @@ typedef enum
 {
     TUFW_IIC                    = 0x01,             // The type firmware IIC
     TUFW_FPGA                   = 0x02,             // The type firmware FPGA
+	TUFW_DATA                   = 0x03,             // The type firmware DATA
 }TUFW_TYPE;
 
 // typedef enum the record append mode
@@ -737,6 +755,14 @@ typedef enum
     TUSM_EXCELLENT              = 0x01,             // The excellent mode
 }TUSTITCH_MODE;
 
+// typedef enum the any bin mode
+typedef enum
+{
+	TUBIN_MODE_SUM             = 0x00,              // [in] the sum bin mode
+	TUBIN_MODE_AVERAGE         = 0x01,              // [in] the average bin mode
+} TUCAM_BINMODE;
+
+
 // typedef enum the focus status
 typedef enum
 {
@@ -745,6 +771,81 @@ typedef enum
     TUFS_COMPLETED              = 0x02,             // The focus status is completed
     TUFS_DEFOCUS                = 0x03,             // The focus status is defocus
 }TUFOCUS_STATUS;
+
+// typedef enum the multi roi status
+typedef enum
+{
+	TUMR_DISABLE                = 0x00,             // The multi roi status is disable
+	TUMR_SETPOS                 = 0x01,             // The multi roi status is set
+	TUMR_ENABLE                 = 0x02,             // The multi roi status is enable
+}TUMULTIROI_STATUS;
+
+// typedef enum the math mode
+typedef enum
+{
+	TUMATH_MODE_ADD             = 0x00,             // The math mode is add
+	TUMATH_MODE_SUBTRACT        = 0x01,             // The math mode is subtract
+	TUMATH_MODE_MULTIPLY        = 0x02,             // The math mode is multiply
+	TUMATH_MODE_DIVIDE          = 0x03,             // The math mode is divide
+}TUMATH_MODE;
+
+// GeniCam  features
+
+// element type
+typedef enum
+{
+	TU_ElemValue                = 0x00,             //!< IValue interface
+	TU_ElemBase                 = 0x01,             //!< IBase interface
+	TU_ElemInteger              = 0x02,             //!< IInteger interface
+	TU_ElemBoolean              = 0x03,             //!< IBoolean interface
+	TU_ElemCommand              = 0x04,             //!< ICommand interface
+	TU_ElemFloat                = 0x05,             //!< IFloat interface
+	TU_ElemString               = 0x06,             //!< IString interface
+	TU_ElemRegister             = 0x07,             //!< IRegister interface
+	TU_ElemCategory             = 0x08,             //!< ICategory interface
+	TU_ElemEnumeration          = 0x09,             //!< IEnumeration interface
+	TU_ElemEnumEntry            = 0x0A,             //!< IEnumEntry interface
+	TU_ElemPort                 = 0x0B,             //!< IPort interface
+} TUELEM_TYPE;
+
+//! access mode of a node
+typedef enum
+{
+	TU_AM_NI                    = 0x00,              //!< Not implemented
+	TU_AM_NA                    = 0x01,              //!< Not available
+	TU_AM_WO                    = 0x02,              //!< Write Only
+	TU_AM_RO                    = 0x03,              //!< Read Only
+	TU_AM_RW                    = 0x04,              //!< Read and Write
+}TUACCESS_MODE;
+
+typedef enum
+{
+	TU_VS_Beginner              = 0x00,              //!< Always visible
+	TU_VS_Expert                = 0x01,              //!< Visible for experts or Gurus
+	TU_VS_Guru                  = 0x02,              //!< Visible for Gurus
+	TU_VS_Invisible             = 0x03,              //!< Not Visible
+	TU_VS_UndefinedVisibility   = 0x10,              //!< Object is not yet initialized
+} TU_VISIBILITY;
+
+typedef enum
+{
+	TU_REPRESENTATION_LINEAR      = 0x00,            // Slider with linear behaviour
+	TU_REPRESENTATION_LOGARITHMIC = 0x01,            // Slider with logarithmic behaviour
+	TU_REPRESENTATION_BOOLEAN     = 0x02,            // Checkbox
+	TU_REPRESENTATION_PURE_NUMBER = 0x03,            // Decimal number in an edit control
+	TU_REPRESENTATION_HEX_NUMBER  = 0x04,            // Hex number in an edit control
+	TU_REPRESENTATION_UNDEFINDED  = 0x05,            // Undefinded Representation
+	TU_REPRESENTATION_IPV4ADDRESS = 0x06,            // IP address(IP version 4)
+	TU_REPRESENTATION_MACADDRESS  = 0x07,            // MAC address
+	TU_REPRESENTATION_TIMESTAMP   = 0x08,            // TimeStamp
+	TU_REPRESENTATION_PTPFRAMECNT = 0x09,            // PTPFRAMECNT
+} TU_REPRESENTATION;
+
+typedef enum
+{
+	TU_CAMERA_XML                 = 0x00,            // [in] the device of the camera xml 
+	TU_CAMERALINK_XML             = 0x01,            // [in] the device of the camera link xml 
+} TUXML_DEVICE;
 
 /* **************************************************************** *
 
@@ -857,6 +958,26 @@ typedef struct _tagTUCAM_ROI_ATTR
 
 }TUCAM_ROI_ATTR, *PTUCAM_ROI_ATTR;
 
+// the camera multi roi attribute
+
+// the camera size attribute
+typedef struct _tagTUCAM_SIZE_ATTR
+{
+	INT32   nHOffset;                          // [in/out] The horizontal offset
+	INT32   nVOffset;                          // [in/out] The vertical offset
+	INT32   nWidth;                            // [in/out] The width
+	INT32   nHeight;                           // [in/out] The height
+
+}TUCAM_SIZE_ATTR, *PTUCAM_SIZE_ATTR;
+
+typedef struct _tagTUCAM_MULTIROI_ATTR
+{
+	BOOL    bLimit;                             // [in/out] The ROI limit 256
+	INT32   nROIStatus;                         // [in/out] The multi roi status
+	TUCAM_SIZE_ATTR sizeAttr;                   // [in/out] The ROI size
+
+}TUCAM_MULTIROI_ATTR, *PTUCAM_MULTIROI_ATTR;
+
 // the camera roi calculate attribute
 typedef struct _tagTUCAM_CALC_ROI_ATTR
 {
@@ -891,6 +1012,16 @@ typedef struct _tagTUCAM_TRGOUT_ATTR
     INT32   nDelayTm;                           // [in/out] The time delay
     INT32   nWidth;                             // [in/out] The width of pulse
 }TUCAM_TRGOUT_ATTR, *PTUCAM_TRGOUT_ATTR;
+
+// the camera any bin attribute
+typedef struct _tagTUCAM_BIN_ATTR
+{
+	BOOL    bEnable;                            // [in/out] The any bin enable
+	INT32   nMode;                              // [in/out] The any bin mode
+	INT32   nWidth;                             // [in/out] The any bin width
+	INT32   nHeight;                            // [in/out] The any bin height
+
+}TUCAM_BIN_ATTR, *PTUCAM_BIN_ATTR;
 
 // the camera frame struct
 typedef struct _tagTUCAM_FRAME
@@ -986,7 +1117,6 @@ typedef struct _tagTUCAM_DRAW
 typedef struct _tagTUCAM_FW_UPDATE
 {
     INT32   nFwType;                // [in] the format of firmware     see TUFW_TYPE
-
     PCHAR   pstrFwFile;             // [in] the path of firmware file
 } TUCAM_FW_UPDATE, *PTUCAM_FW_UPDATE;
 
@@ -1066,12 +1196,19 @@ typedef struct _tagTUCAM_RAWIMG_HEADER
 	USHORT usWidth;         // [in/out] The image width
 	USHORT usHeight;        // [in/out] The image height
 
+	USHORT usXOffset;       // [out] The buf x offset
+	USHORT usYOffset;       // [out] The buf y offset
+	USHORT usXPadding;      // [out] The buf x padding
+	USHORT usYPadding;      // [out] The buf y padding
+	USHORT usOffset;        // [out] The buf offset
+
 	UCHAR  ucDepth;         // [in/out] The image data depth (see from CV)
 	UCHAR  ucChannels;      // [in/out] The image data channels
 	UCHAR  ucElemBytes;     // [in/out] The image data bytes per element
 
 	UINT32 uiIndex;         // [out] The image index number
 	UINT32 uiImgSize;       // [in/out] The image size
+	UINT32 uiPixelFormat;   // [out] The buf pixel format
 
 	DOUBLE dblExposure;     // [in/out] The exposure time
 
@@ -1082,6 +1219,59 @@ typedef struct _tagTUCAM_RAWIMG_HEADER
 	DOUBLE dblTimeLast;     // [in/out] The time stamp last
 
 }TUCAM_RAWIMG_HEADER, *PTUCAM_RAWIMG_HEADER;
+
+// the subtract background struct
+typedef struct _tagTUCAM_IMG_BACKGROUND
+{
+	BOOL                 bEnable;   // [in/out] The subtract background enable
+
+	TUCAM_RAWIMG_HEADER  ImgHeader; // [in] the struct of camera frame
+} TUCAM_IMG_BACKGROUND, *PTUCAM_IMG_BACKGROUND;
+
+// the math struct
+typedef struct _tagTUCAM_IMG_MATH
+{
+	BOOL                 bEnable;   // [in/out] The math enable
+	
+	INT                  nMode;     // [in/out] The math mode
+	 
+	USHORT               usGray;    // [in/out] The math gray
+} TUCAM_IMG_MATH, *PTUCAM_IMG_MATH;
+
+typedef struct _tagTUCAM_ELEMENT
+{
+	BYTE IsLocked;                 //[out] whether is locked
+	BYTE Level;                    //[out] level
+	WORD Representation;           //[out] representation
+	TUELEM_TYPE   Type;	           //[out] element type	[RO]
+	TUACCESS_MODE Access;          //[out] access mode .write/read
+	TU_VISIBILITY Visibility;      //[out] visibility
+	INT32 nReserve;                //[out] reserve
+	union {
+		struct {
+			INT64 nVal;	          //[in/out] current_value attribute or the length of string	[RO/WO/RW]
+			INT64 nMin;	          //[out] minimum_value attribute or the length of string	[RO]
+			INT64 nMax;	          //[out] maximum_value attribute or the length of string	[RO]
+			INT64 nStep;	      //[out] increment attribute or the length of string		[RO]
+			INT64 nDefault;	      //[out] old_value attribute or the length of string		[RO]
+		};
+		struct {
+			DOUBLE dbVal;        //[in/out] current_value attribute [RO/WO/RW]
+			DOUBLE dbMin;        //[out] minimum_value attribute [RO]
+			DOUBLE dbMax;        //[out] maximum_value attribute [RO]
+			DOUBLE dbStep;       //[out] increment attribute [RO]
+			DOUBLE dbDefault;    //[out] old_value attribute [RO]
+		};
+	};
+	PCHAR pName;                 //[out] id name	[RO]
+	PCHAR pDisplayName;          //[out] display name	[RO]
+	PCHAR pTransfer;		     //[out] string/Register address
+	PCHAR pDesc;	             //[out] description
+	PCHAR pUnit;	             //[out] unit
+	PCHAR *pEntries;	         //[out] enumeration entry list
+	INT64 PollingTime;           //[out] pollingTime
+	INT64 DisplayPrecision;      //[out] displayPrecision 
+}TUCAM_ELEMENT, *PTUCAM_ELEMENT;
 
 typedef void(*BUFFER_CALLBACK)(void *pUserContex);
 
