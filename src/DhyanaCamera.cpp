@@ -75,6 +75,7 @@ Camera::~Camera()
 	// Close camera
 	DEB_TRACE() << "Close TUCAM API ...";
 	TUCAM_Dev_Close(m_opCam.hIdxTUCam);
+	m_opCam.hIdxTUCam = NULL;
 	// Uninitialize SDK API environment
 	DEB_TRACE() << "Uninitialize TUCAM API ...";
 	TUCAM_Api_Uninit();
@@ -93,7 +94,7 @@ void Camera::init()
 {
 	DEB_MEMBER_FUNCT();
 	DEB_TRACE() << "Initialize TUCAM API ...";
-	m_itApi.pstrConfigPath = NULL;//Camera parameters input saving path is not defined
+	m_itApi.pstrConfigPath = "./";//Camera parameters input saving path is not defined
 	m_itApi.uiCamCount = 0;
 
 	if(TUCAMRET_SUCCESS != TUCAM_Api_Init(&m_itApi))
@@ -108,7 +109,7 @@ void Camera::init()
 		THROW_HW_ERROR(Error) << "Unable to locate the camera !";
 	}
 
-	DEB_TRACE() << "Open TUCAM API ...";
+	DEB_TRACE() << "Open TUCAM API ...(nb. camera : "<<m_itApi.uiCamCount<<")";
 	m_opCam.hIdxTUCam = NULL;
 	m_opCam.uiIdxOpen = 0;	
 	if(TUCAMRET_SUCCESS != TUCAM_Dev_Open(&m_opCam))
@@ -174,7 +175,7 @@ void Camera::prepareAcq()
 	if(NULL == m_hThdEvent)
 	{
 		m_frame.pBuffer = NULL;
-		m_frame.ucFormatGet = TUFRM_FMT_RAW;
+		m_frame.ucFormatGet = TUFRM_FMT_USUAl;
 		m_frame.uiRsdSize = 1;// how many frames do you want
 
 		// Alloc buffer after set resolution or set ROI attribute
@@ -381,14 +382,14 @@ bool Camera::readFrame(void *bptr, int& frame_nb)
 	Timestamp t0 = Timestamp::now();
 
 	//@BEGIN : Get frame from Driver/API & copy it into bptr already allocated 
-	DEB_TRACE() << "Copy Buffer image into Lima Frame Ptr";
+	////DEB_TRACE() << "Copy Buffer image into Lima Frame Ptr";
 	memcpy((unsigned short *) bptr, (unsigned short *) (m_frame.pBuffer + m_frame.usOffset), m_frame.uiImgSize);//we need a nb of BYTES .		
 	frame_nb = m_frame.uiIndex;
 	//@END	
 
-	Timestamp t1 = Timestamp::now();
-	double delta_time = t1 - t0;
-	DEB_TRACE() << "readFrame : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
+	////Timestamp t1 = Timestamp::now();
+	////double delta_time = t1 - t0;
+	////DEB_TRACE() << "readFrame : elapsed time = " << (int) (delta_time * 1000) << " (ms)";
 	return false;
 }
 
@@ -448,22 +449,24 @@ void Camera::AcqThread::threadFunction()
 			
 			if(TUCAMRET_SUCCESS == TUCAM_Buf_WaitForFrame(m_cam.m_opCam.hIdxTUCam, &m_cam.m_frame))
 			{
+				/*
 				//The based information
-				//DEB_TRACE() << "m_cam.m_frame.szSignature = "	<< m_cam.m_frame.szSignature<<std::endl;		// [out]Copyright+Version: TU+1.0 ['T', 'U', '1', '\0']		
-				//DEB_TRACE() << "m_cam.m_frame.usHeader = "	<< m_cam.m_frame.usHeader<<std::endl;			// [out] The frame header size
-				//DEB_TRACE() << "m_cam.m_frame.usOffset = "	<< m_cam.m_frame.usOffset<<std::endl;			// [out] The frame data offset
-				//DEB_TRACE() << "m_cam.m_frame.usWidth = "		<< m_cam.m_frame.usWidth;						// [out] The frame width
-				//DEB_TRACE() << "m_cam.m_frame.usHeight = "	<< m_cam.m_frame.usHeight;						// [out] The frame height
-				//DEB_TRACE() << "m_cam.m_frame.uiWidthStep = "	<< m_cam.m_frame.uiWidthStep<<std::endl;		// [out] The frame width step
-				//DEB_TRACE() << "m_cam.m_frame.ucDepth = "		<< m_cam.m_frame.ucDepth<<std::endl;			// [out] The frame data depth 
-				//DEB_TRACE() << "m_cam.m_frame.ucFormat = "	<< m_cam.m_frame.ucFormat<<std::endl;			// [out] The frame data format                  
-				//DEB_TRACE() << "m_cam.m_frame.ucChannels = "	<< m_cam.m_frame.ucChannels<<std::endl;			// [out] The frame data channels
-				//DEB_TRACE() << "m_cam.m_frame.ucElemBytes = "	<< m_cam.m_frame.ucElemBytes<<std::endl;		// [out] The frame data bytes per element
-				//DEB_TRACE() << "m_cam.m_frame.ucFormatGet = "	<< m_cam.m_frame.ucFormatGet<<std::endl;		// [in]  Which frame data format do you want    see TUFRM_FORMATS
-				//DEB_TRACE() << "m_cam.m_frame.uiIndex = "		<< m_cam.m_frame.uiIndex;						// [in/out] The frame index number
-				//DEB_TRACE() << "m_cam.m_frame.uiImgSize = "	<< m_cam.m_frame.uiImgSize;						// [out] The frame size
-				//DEB_TRACE() << "m_cam.m_frame.uiRsdSize = "	<< m_cam.m_frame.uiRsdSize;						// [in]  The frame reserved size    (how many frames do you want)
-				//DEB_TRACE() << "m_cam.m_frame.uiHstSize = "	<< m_cam.m_frame.uiHstSize<<std::endl;			// [out] The frame histogram size	
+				DEB_TRACE() << "m_cam.m_frame.szSignature = "	<< m_cam.m_frame.szSignature	;		// [out]Copyright+Version: TU+1.0 ['T', 'U', '1', '\0']		
+				DEB_TRACE() << "m_cam.m_frame.usHeader = "		<< m_cam.m_frame.usHeader		;		// [out] The frame header size
+				DEB_TRACE() << "m_cam.m_frame.usOffset = "		<< m_cam.m_frame.usOffset		;		// [out] The frame data offset
+				DEB_TRACE() << "m_cam.m_frame.usWidth = "		<< m_cam.m_frame.usWidth		;		// [out] The frame width
+				DEB_TRACE() << "m_cam.m_frame.usHeight = "		<< m_cam.m_frame.usHeight		;		// [out] The frame height
+				DEB_TRACE() << "m_cam.m_frame.uiWidthStep = "	<< m_cam.m_frame.uiWidthStep	;		// [out] The frame width step
+				DEB_TRACE() << "m_cam.m_frame.ucDepth = "		<< m_cam.m_frame.ucDepth		;		// [out] The frame data depth 
+				DEB_TRACE() << "m_cam.m_frame.ucFormat = "		<< m_cam.m_frame.ucFormat		;		// [out] The frame data format                  
+				DEB_TRACE() << "m_cam.m_frame.ucChannels = "	<< m_cam.m_frame.ucChannels		;		// [out] The frame data channels
+				DEB_TRACE() << "m_cam.m_frame.ucElemBytes = "	<< m_cam.m_frame.ucElemBytes	;		// [out] The frame data bytes per element
+				DEB_TRACE() << "m_cam.m_frame.ucFormatGet = "	<< m_cam.m_frame.ucFormatGet	;		// [in]  Which frame data format do you want    see TUFRM_FORMATS
+				DEB_TRACE() << "m_cam.m_frame.uiIndex = "		<< m_cam.m_frame.uiIndex		;		// [in/out] The frame index number
+				DEB_TRACE() << "m_cam.m_frame.uiImgSize = "		<< m_cam.m_frame.uiImgSize		;		// [out] The frame size
+				DEB_TRACE() << "m_cam.m_frame.uiRsdSize = "		<< m_cam.m_frame.uiRsdSize		;		// [in]  The frame reserved size    (how many frames do you want)
+				DEB_TRACE() << "m_cam.m_frame.uiHstSize = "		<< m_cam.m_frame.uiHstSize		;		// [out] The frame histogram size	
+				*/
 
 				// Grabbing was successful, process image
 				m_cam.setStatus(Camera::Readout, false);
@@ -483,8 +486,8 @@ void Camera::AcqThread::threadFunction()
 				continueFlag = buffer_mgr.newFrameReady(frame_info);
 				m_cam.m_acq_frame_nb++;
 				
-				Timestamp t1 = Timestamp::now();
-				double delta_time = t1 - t0;			
+				////Timestamp t1 = Timestamp::now();
+				////double delta_time = t1 - t0;			
 
 				//wait latency after each frame , except for the last image 
 				if((!m_cam.m_nb_frames) || (m_cam.m_acq_frame_nb < m_cam.m_nb_frames) && (m_cam.m_lat_time))
@@ -492,10 +495,12 @@ void Camera::AcqThread::threadFunction()
 					DEB_TRACE() << "Wait latency time : " << m_cam.m_lat_time * 1000 << " (ms) ...";
 					usleep((DWORD) (m_cam.m_lat_time * 1000000));
 				}		
-				DEB_TRACE() << "newFrameReady+latency : elapsed time = " << (int) (delta_time * 1000) << " (ms)";						
+				////DEB_TRACE() << "newFrameReady+latency : elapsed time = " << (int) (delta_time * 1000) << " (ms)";						
 			}
 			else
 			{
+				if(m_cam.m_trigger_mode == IntTrigMult)
+					continue;
 				DEB_TRACE() << "Unable to get the frame from the camera !";
 			}
 
@@ -640,7 +645,20 @@ void Camera::getDetectorImageSize(Size& size)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : Get Detector size in pixels from Driver/API
-	size = Size(PIXEL_NB_WIDTH, PIXEL_NB_HEIGHT);
+	std::string model="UNKNOWN";
+	getDetectorModel(model);
+	if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
+	{
+		size = Size(PIXEL_NB_WIDTH_MODEL_95, PIXEL_NB_HEIGHT_MODEL_95);
+	}
+	else if (model.find("4040") != std::string::npos)
+	{
+		size = Size(PIXEL_NB_WIDTH_MODEL_4040, PIXEL_NB_HEIGHT_MODEL_4040);
+	}	
+	else
+	{
+		THROW_HW_ERROR(NotSupported) << model;
+	}
 	//@END
 }
 
@@ -650,9 +668,23 @@ void Camera::getDetectorImageSize(Size& size)
 void Camera::getPixelSize(double& sizex, double& sizey)
 {
 	DEB_MEMBER_FUNCT();
-	//@BEGIN : Get Pixels size in micron from Driver/API			
-	sizex = PIXEL_SIZE_WIDTH_MICRON;
-	sizey = PIXEL_SIZE_HEIGHT_MICRON;
+	//@BEGIN : Get Pixels size in micron from Driver/API	
+	std::string model="UNKNOWN";
+	getDetectorModel(model);	
+	if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
+	{
+		sizex = PIXEL_SIZE_WIDTH_MICRON_MODEL_95;
+		sizey = PIXEL_SIZE_HEIGHT_MICRON_MODEL_95;
+	}
+	else if (model.find("4040") != std::string::npos)
+	{
+		sizex=PIXEL_SIZE_WIDTH_MICRON_MODEL_4040;
+		sizey=PIXEL_SIZE_HEIGHT_MICRON_MODEL_4040;
+	}
+	else
+	{
+		THROW_HW_ERROR(NotSupported) << model;
+	}	
 	//@END
 }
 

@@ -50,9 +50,10 @@ namespace lima
 
 		class Camera;
 
-		/******************************************************************
-		*
-		*******************************************************************/
+		////////////////////////////////////////////////////////////////////
+		//CBaseTimer class
+		////////////////////////////////////////////////////////////////////
+		
 		class CBaseTimer
 		{
 			DEB_CLASS_NAMESPC(DebModCamera, "Camera", "CBaseTimer");
@@ -69,8 +70,8 @@ namespace lima
 			static void CALLBACK base_timer_proc(UINT uID, UINT uMsg, DWORD_PTR dwUser, DWORD_PTR dw1, DWORD_PTR dw2)
 			{
 				//std::cout<<" ----> base_timer_proc <------- [BEGIN]"<<std::endl;
-				CBaseTimer* pThis = (CBaseTimer*)dwUser;
-				pThis->on_timer();
+				CBaseTimer* owner = (CBaseTimer*)dwUser;
+				owner->on_timer();
 				//std::cout<<" ----> base_timer_proc <------- [END]"<<std::endl;
 			}
 			//------------------------------------------------------------
@@ -90,13 +91,12 @@ namespace lima
 			int  m_timer_id;
 			long m_period_ms;
 			UINT m_resolution;
-			int  m_nb_triggers;
 			bool m_is_oneshot;
 		};
 
-		/******************************************************************
-		*
-		******************************************************************/
+		////////////////////////////////////////////////////////////////////
+		//CSoftTriggerTimer class
+		////////////////////////////////////////////////////////////////////		
 		class CSoftTriggerTimer : public CBaseTimer
 		{
 			DEB_CLASS_NAMESPC(DebModCamera, "Camera", "CSoftTriggerTimer");
