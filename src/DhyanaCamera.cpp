@@ -997,7 +997,18 @@ void Camera::checkRoi(const Roi& set_roi, Roi& hw_roi)
 	DEB_PARAM() << DEB_VAR1(set_roi);
 	//@BEGIN : check available values of Roi
 	if(set_roi.isActive())
-	{
+	{	
+		if ((set_roi.getSize().getWidth() % 4 != 0)     ||
+			(set_roi.getSize().getHeight() % 4 != 0)    ||
+			(set_roi.getTopLeft().x % 4 != 0)           ||
+			(set_roi.getTopLeft().y % 4 != 0))           
+		{
+			THROW_HW_ERROR(Error) << "Roi coordinates (x, y, width, height) must respect some constraints:\n"
+								  << " - x must be a multiple of 4 \n"
+								  << " - y must be a multiple of 4 \n"
+								  << " - width must be a multiple of 4 \n"
+								  << " - height must be a multiple of 4 \n";
+		}     
 		hw_roi = set_roi;
 	}
 	else
