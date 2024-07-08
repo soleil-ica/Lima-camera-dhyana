@@ -941,16 +941,19 @@ void Camera::checkBin(Bin &hw_bin)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : check available values of binning H/V
+	/*Binning available only in 2.0.7
 	int x = hw_bin.getX();
 	int y = hw_bin.getY();
-	if(x != 1 || y != 1)
+	if( x ==0 ||y ==0 )
 	{
-		DEB_ERROR() << "Binning values not supported";
+		DEB_ERROR() << "Binning values not supported.\n BinH and BinV must be greater than Zero";
 		THROW_HW_ERROR(Error) << "Binning values not supported = " << DEB_VAR1(hw_bin);
 	}
+	hw_bin = Bin(x, y);
+	*/
 	//@END
 
-	hw_bin = Bin(x, y);
+	hw_bin = Bin(1, 1);
 	DEB_RETURN() << DEB_VAR1(hw_bin);
 }
 //-----------------------------------------------------
@@ -961,10 +964,21 @@ void Camera::setBin(const Bin &set_bin)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : set binning H/V to the Driver/API
-	//...
-	//@END
+	/*Binning available only in 2.0.7
+	TUCAM_BIN_ATTR binAttr;
+	binAttr.bEnable = true;
+	binAttr.nWidth = set_bin.getX();
+	binAttr.nHeight = set_bin.getY();
+	
+	if(TUCAMRET_SUCCESS != TUCAM_Cap_SetBIN(m_opCam.hIdxTUCam, binAttr))
+	{
+		THROW_HW_ERROR(Error) << "Unable to SetBin from  the camera !";
+	}
 	m_bin = set_bin;
-
+	*/
+	//@END
+	Bin tmp_bin(1,1);
+	m_bin = tmp_bin;
 	DEB_RETURN() << DEB_VAR1(set_bin);
 }
 
@@ -976,11 +990,18 @@ void Camera::getBin(Bin &hw_bin)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : get binning from Driver/API
-	int bin_x = 1;
-	int bin_y = 1;
+	/*Binning available only in 2.0.7
+	TUCAM_BIN_ATTR binAttr;
+	
+	if(TUCAMRET_SUCCESS != TUCAM_Cap_GetBIN(m_opCam.hIdxTUCam, &binAttr))
+	{
+		THROW_HW_ERROR(Error) << "Unable to GetBin from  the camera !";
+	}
+	Bin tmp_bin(binAttr.nWidth, binAttr.nHeight);
+	*/
 	//@END
-	Bin tmp_bin(bin_x, bin_y);
-
+	
+	Bin tmp_bin(1,1);
 	hw_bin = tmp_bin;
 	m_bin = tmp_bin;
 
