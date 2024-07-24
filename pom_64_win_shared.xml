@@ -9,7 +9,7 @@
 
     <groupId>fr.soleil.lib.Lima.Camera</groupId>
     <artifactId>LimaDhyana-amd64-Windows-msvc12-shared-${mode}</artifactId>
-    <version>1.7.0</version>
+    <version>1.7.1</version>
 	
     <packaging>nar</packaging>
     <name>LimaDhyana</name>
