@@ -250,6 +250,7 @@ private:
     TUCAM_TRGOUT_ATTR m_tgroutAttr1;
     TUCAM_TRGOUT_ATTR m_tgroutAttr2;
     TUCAM_TRGOUT_ATTR m_tgroutAttr3;
+    TUCAM_TRIGGER_ATTR*	m_tgrAttr;
    
     //All camera available properties/parameters map
     std::map<std::string, int> m_parameters_map;

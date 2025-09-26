@@ -64,6 +64,7 @@ m_tucam_trigger_edge_mode(kEdgeRising)
 	DEB_TRACE() <<"Create the Internal Trigger Timer";
 	m_internal_trigger_timer = new CSoftTriggerTimer(m_timer_period_ms, *this);
 	m_acq_thread->start();
+	m_tgrAttr = new TUCAM_TRIGGER_ATTR();
 }
 
 //-----------------------------------------------------
@@ -85,6 +86,7 @@ Camera::~Camera()
 	//delete the Internal Trigger Timer
 	DEB_TRACE() << "Delete the Internal Trigger Timer";
 	delete m_internal_trigger_timer;
+	delete m_tgrAttr;
 }
 
 //-----------------------------------------------------
@@ -731,40 +733,39 @@ void Camera::setTrigMode(TrigMode mode)
 	DEB_TRACE() << "setTrigMode() " << DEB_VAR1(mode);
 	DEB_PARAM() << DEB_VAR1(mode);
 	//@BEGIN
-	TUCAM_TRIGGER_ATTR tgrAttr;
-	tgrAttr.nTgrMode = -1;//NOT DEFINED (see below)
-	tgrAttr.nFrames = 1;
-	tgrAttr.nDelayTm = 0;
-	tgrAttr.nExpMode = -1;//NOT DEFINED (see below)
-	tgrAttr.nEdgeMode = TUCTD_RISING;
+	m_tgrAttr->nTgrMode = -1;//NOT DEFINED (see below)
+	m_tgrAttr->nFrames = 1;
+	m_tgrAttr->nDelayTm = 0;
+	m_tgrAttr->nExpMode = -1;//NOT DEFINED (see below)
+	m_tgrAttr->nEdgeMode = TUCTD_RISING;
 
 	switch(mode)
 	{
 		case IntTrig:
-			tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
-			tgrAttr.nExpMode = TUCTE_EXPTM;
-			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
+			m_tgrAttr->nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+			m_tgrAttr->nExpMode = TUCTE_EXPTM;
+			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, *m_tgrAttr);
 			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_SOFTWARE (EXPOSURE SOFTWARE)";
 			break;
 		case IntTrigMult:
-			tgrAttr.nTgrMode = TUCCM_TRIGGER_SOFTWARE;
-			tgrAttr.nExpMode = TUCTE_EXPTM;
-			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
+			m_tgrAttr->nTgrMode = TUCCM_TRIGGER_SOFTWARE;
+			m_tgrAttr->nExpMode = TUCTE_EXPTM;
+			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, *m_tgrAttr);
 			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_SOFTWARE (EXPOSURE SOFTWARE) (MULTI)";
 			break;			
-		case ExtTrigMult :
-			tgrAttr.nTgrMode = TUCCM_TRIGGER_STANDARD;
-			tgrAttr.nExpMode = TUCTE_EXPTM;
-			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
-			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE SOFTWARE: "<<tgrAttr.nExpMode<<")";
+		case ExtTrigMult:
+			m_tgrAttr->nTgrMode = TUCCM_TRIGGER_STANDARD;
+			m_tgrAttr->nExpMode = TUCTE_EXPTM;
+			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, *m_tgrAttr);
+			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE SOFTWARE: "<<m_tgrAttr->nExpMode<<")";
 			break;
 		case ExtGate:		
-			tgrAttr.nTgrMode = TUCCM_TRIGGER_STANDARD;
-			tgrAttr.nExpMode = TUCTE_WIDTH;
-			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, tgrAttr);
-			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE TRIGGER WIDTH: "<<tgrAttr.nExpMode<<")";
+			m_tgrAttr->nTgrMode = TUCCM_TRIGGER_STANDARD;
+			m_tgrAttr->nExpMode = TUCTE_WIDTH;
+			TUCAM_Cap_SetTrigger(m_opCam.hIdxTUCam, *m_tgrAttr);
+			DEB_TRACE() << "TUCAM_Cap_SetTrigger : TUCCM_TRIGGER_STANDARD (EXPOSURE TRIGGER WIDTH: "<<m_tgrAttr->nExpMode<<")";
 			break;			
-		case ExtTrigSingle :		
+		case ExtTrigSingle:		
 		case ExtTrigReadout:
 		default:
 			THROW_HW_ERROR(NotSupported) << DEB_VAR1(mode);
