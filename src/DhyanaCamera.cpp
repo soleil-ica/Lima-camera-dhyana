@@ -24,6 +24,7 @@
 #include <iostream>
 #include <string>
 #include <math.h>
+#include <algorithm>
 //#include <chrono>
 #include <climits>
 #include <iomanip>
@@ -941,44 +942,78 @@ void Camera::checkBin(Bin &hw_bin)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : check available values of binning H/V
-	/*Binning available only in 2.0.7
-	int x = hw_bin.getX();
-	int y = hw_bin.getY();
-	if( x ==0 ||y ==0 )
+	std::vector<int> binningValues = {1, 2, 4};
+
+	// Binning is available since version 2.0.7 for Dhyana 4040
+	std::string model="UNKNOWN";
+	getDetectorModel(model);
+	if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
 	{
-		DEB_ERROR() << "Binning values not supported.\n BinH and BinV must be greater than Zero";
-		THROW_HW_ERROR(Error) << "Binning values not supported = " << DEB_VAR1(hw_bin);
+		DEB_ERROR() << "Binning is not supported for Dhyana 95 detectors, binning is set to 1x1";
+		m_bin = Bin(1, 1);
+		hw_bin = m_bin;
 	}
-	hw_bin = Bin(x, y);
-	*/
+	else if (model.find("4040") != std::string::npos)
+	{
+		int x = hw_bin.getX();
+		int y = hw_bin.getY();
+		if( !(std::find(binningValues.begin(), binningValues.end(), x) != binningValues.end() && 
+			std::find(binningValues.begin(), binningValues.end(), y) != binningValues.end()) )
+		{
+			DEB_ERROR() << "Binning values not supported.\n BinH and BinV must be 1x1, 2x2, or 4x4";
+			THROW_HW_ERROR(Error) << "Binning values not supported = " << DEB_VAR1(hw_bin);
+		}
+	}
+	else
+	{
+		DEB_ERROR() << "Detector model unknown, binning is set to 1x1";
+		m_bin = Bin(1, 1);
+		hw_bin = m_bin;
+	}
+
 	//@END
 
-	hw_bin = Bin(1, 1);
 	DEB_RETURN() << DEB_VAR1(hw_bin);
 }
+
 //-----------------------------------------------------
 // @brief set the new binning mode
 //-----------------------------------------------------
-void Camera::setBin(const Bin &set_bin)
+void Camera::setBin(const Bin& set_bin)
 {
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : set binning H/V to the Driver/API
-	/*Binning available only in 2.0.7
-	TUCAM_BIN_ATTR binAttr;
-	binAttr.bEnable = true;
-	binAttr.nWidth = set_bin.getX();
-	binAttr.nHeight = set_bin.getY();
-	
-	if(TUCAMRET_SUCCESS != TUCAM_Cap_SetBIN(m_opCam.hIdxTUCam, binAttr))
+
+	// Binning is available since version 2.0.7 for Dhyana 4040
+	std::string model="UNKNOWN";
+	getDetectorModel(model);
+	if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
 	{
-		THROW_HW_ERROR(Error) << "Unable to SetBin from  the camera !";
+		DEB_ERROR() << "Binning is not supported for Dhyana 95 detectors, binning is set to 1x1";
 	}
-	m_bin = set_bin;
-	*/
+	else if (model.find("4040") != std::string::npos)
+	{
+		if (set_bin != m_bin)
+		{
+			TUCAM_BIN_ATTR binAttr;
+			binAttr.bEnable = true;
+			binAttr.nWidth = set_bin.getX();
+			binAttr.nHeight = set_bin.getY();
+			
+			if(TUCAMRET_SUCCESS != TUCAM_Cap_SetBIN(m_opCam.hIdxTUCam, binAttr))
+			{
+				THROW_HW_ERROR(Error) << "Unable to SetBin from  the camera !";
+			}
+			m_bin = set_bin;
+		}
+	}
+	else
+	{
+		DEB_ERROR() << "Detector model unknown, binning is set to 1x1";
+	}
+
 	//@END
-	Bin tmp_bin(1,1);
-	m_bin = tmp_bin;
 	DEB_RETURN() << DEB_VAR1(set_bin);
 }
 
@@ -990,19 +1025,18 @@ void Camera::getBin(Bin &hw_bin)
 	DEB_MEMBER_FUNCT();
 
 	//@BEGIN : get binning from Driver/API
-	/*Binning available only in 2.0.7
+
+	// Binning is available since version 2.0.7 for Dhyana 4040
 	TUCAM_BIN_ATTR binAttr;
-	
+
 	if(TUCAMRET_SUCCESS != TUCAM_Cap_GetBIN(m_opCam.hIdxTUCam, &binAttr))
 	{
 		THROW_HW_ERROR(Error) << "Unable to GetBin from  the camera !";
 	}
 	Bin tmp_bin(binAttr.nWidth, binAttr.nHeight);
-	*/
+
 	//@END
-	
-	Bin tmp_bin(1,1);
-	hw_bin = tmp_bin;
+
 	m_bin = tmp_bin;
 
 	DEB_RETURN() << DEB_VAR1(hw_bin);
