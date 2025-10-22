@@ -947,15 +947,8 @@ void Camera::checkBin(Bin &hw_bin)
 		std::vector<int> binningValues = {1, 2, 4};
 
 		// Binning is available since version 2.0.7 for Dhyana 4040
-		std::string model="UNKNOWN";
-		getDetectorModel(model);
-		if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
-		{
-			DEB_ERROR() << "Binning is not supported for Dhyana 95 detectors, binning is set to 1x1";
-			m_bin = Bin(1, 1);
-			hw_bin = m_bin;
-		}
-		else if (model.find("4040") != std::string::npos)
+
+		if (is_dhyana_4040())
 		{
 			int x = hw_bin.getX();
 			int y = hw_bin.getY();
@@ -968,7 +961,7 @@ void Camera::checkBin(Bin &hw_bin)
 		}
 		else
 		{
-			DEB_ERROR() << "Detector model unknown, binning is set to 1x1";
+			DEB_ERROR() << "Binning is not supported for this model, binning is set to 1x1";
 			m_bin = Bin(1, 1);
 			hw_bin = m_bin;
 		}
@@ -1000,13 +993,8 @@ void Camera::setBin(const Bin& set_bin)
 
 	#ifdef BINNING_4040_ENABLED
 		// Binning is available since version 2.0.7 for Dhyana 4040
-		std::string model="UNKNOWN";
-		getDetectorModel(model);
-		if (model == "Dhyana 95"  || model.find("Dhyana 95 V2") != std::string::npos)
-		{
-			DEB_ERROR() << "Binning is not supported for Dhyana 95 detectors, binning is set to 1x1";
-		}
-		else if (model.find("4040") != std::string::npos)
+
+		if (is_dhyana_4040())
 		{
 			if (set_bin != m_bin)
 			{
@@ -1024,7 +1012,7 @@ void Camera::setBin(const Bin& set_bin)
 		}
 		else
 		{
-			DEB_ERROR() << "Detector model unknown, binning is set to 1x1";
+			m_bin = set_bin;
 		}
 	#else
 		m_bin = set_bin;

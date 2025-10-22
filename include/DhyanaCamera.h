@@ -213,6 +213,17 @@ private:
             return false;
         }
     }
+    inline bool is_dhyana_4040()
+	{
+		std::string model="UNKNOWN";
+		getDetectorModel(model);
+		
+		if (model.find("4040") != std::string::npos)
+		{
+			return true;
+		}
+		return false;
+	}
 
     void createParametersMap();
     std::stringstream getParameterValue(std::string parameter_name, int parameter_id);
