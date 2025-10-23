@@ -202,18 +202,7 @@ private:
     bool readFrame(void *bptr, int& frame_nb);
     void setStatus(Camera::Status status, bool force);    
 	void _startAcq();
-    inline bool IS_POWER_OF_2(long x)
-    {
-        if( ((x ^ (x - 1)) == x + (x - 1)) && (x != 0) )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
+    bool is_dhyana_4040();
     void createParametersMap();
     std::stringstream getParameterValue(std::string parameter_name, int parameter_id);
 
