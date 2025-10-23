@@ -202,29 +202,7 @@ private:
     bool readFrame(void *bptr, int& frame_nb);
     void setStatus(Camera::Status status, bool force);    
 	void _startAcq();
-    inline bool IS_POWER_OF_2(long x)
-    {
-        if( ((x ^ (x - 1)) == x + (x - 1)) && (x != 0) )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-    inline bool is_dhyana_4040()
-	{
-		std::string model="UNKNOWN";
-		getDetectorModel(model);
-		
-		if (model.find("4040") != std::string::npos)
-		{
-			return true;
-		}
-		return false;
-	}
-
+    bool is_dhyana_4040();
     void createParametersMap();
     std::stringstream getParameterValue(std::string parameter_name, int parameter_id);
 

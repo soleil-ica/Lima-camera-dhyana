@@ -1688,6 +1688,21 @@ std::stringstream Camera::getParameterValue(std::string parameter_name, int para
 	return result;
 }
 
+//---------------------------------------
+// @brief Get if camera model is Dhayna4040
+//---------------------------------------
+bool Camera::is_dhyana_4040()
+{
+	std::string model="UNKNOWN";
+	getDetectorModel(model);
+	
+	if (model.find("4040") != std::string::npos)
+	{
+		return true;
+	}
+	return false;
+}
+
 //--------------------------------------------------------
 // @brief Create a map including all availbla parameters 
 //--------------------------------------------------------
